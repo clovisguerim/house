@@ -6,6 +6,7 @@ services:
     name: house
     runtime: docker
     plan: free
+    region: virginia           # mesma região do banco no Neon (aws-us-east-1)
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL

@@ -4,3 +4,7 @@ house.db
 
 .secret_key
 outputs/
+.env
+.env.*
+.neon
+.neon
