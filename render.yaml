@@ -1,0 +1,22 @@
+# Blueprint do Render (https://render.com): New > Blueprint > escolha este repositório.
+# O disco do plano gratuito é apagado a cada deploy/reinício, então os dados ficam num Postgres
+# externo gratuito (ex.: Neon ou Supabase): cole a connection string em DATABASE_URL.
+services:
+  - type: web
+    name: house
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false            # você informa no painel (Postgres do Neon/Supabase)
+      - key: HOUSE_SECRET_KEY
+        generateValue: true
+      - key: HOUSE_SENHA_INICIAL_ADMIN
+        generateValue: true    # veja o valor no painel, entre e troque a senha
+      - key: HOUSE_CADASTRO
+        value: aprovacao
+      - key: HOUSE_BUSCAS_POR_HORA
+        value: "20"
+      - key: ANTHROPIC_API_KEY
+        sync: false            # opcional: liga a IA

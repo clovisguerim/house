@@ -1,0 +1,6 @@
+﻿.venv/
+__pycache__/
+house.db
+
+.secret_key
+outputs/
