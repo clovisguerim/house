@@ -1,6 +1,8 @@
 import asyncio
+import difflib
 import json
 import re
+from pathlib import Path
 from html import unescape
 from urllib.parse import urlencode
 
@@ -109,11 +111,33 @@ def _detalhes(im: Imovel, html: str) -> None:
         g["seguro_fianca"], g["fiador"], g["caucao"], g["titulo_capitalizacao"])
 
 
-async def localizar_bairro(bairro: str, fetcher: Fetcher) -> Referencia | None:
-    """Coordenadas e região de um bairro de BH, usando a página de bairro do Netimóveis.
+_TABELA = Path(__file__).resolve().parent.parent / "data" / "bairros_bh.json"
+_BAIRROS: dict[str, dict] = json.loads(_TABELA.read_text(encoding="utf-8")) if _TABELA.exists() else {}
 
-    O site resolve a região a partir do bairro, então qualquer segmento de região serve na URL.
+
+def _bairro_da_tabela(bairro: str) -> Referencia | None:
+    """Procura na tabela embutida (gerada a partir do Netimóveis): slug exato, depois nome
+    parecido, para aceitar erro de digitação ("gloria", "Glória", "glorya")."""
+    slug = slugify(bairro)
+    if slug not in _BAIRROS:
+        parecidos = difflib.get_close_matches(slug, list(_BAIRROS), n=1, cutoff=0.8)
+        if not parecidos:
+            return None
+        slug = parecidos[0]
+    b = _BAIRROS[slug]
+    return {"bairro": b["bairro"], "slug": slug, "regiao": b["regiao"], "regiao_slug": b["regiao_slug"],
+            "latitude": b["latitude"], "longitude": b["longitude"]}
+
+
+async def localizar_bairro(bairro: str, fetcher: Fetcher) -> Referencia | None:
+    """Coordenadas e região de um bairro de BH.
+
+    Primeiro a tabela embutida (não depende de rede: servidores na nuvem podem ser bloqueados pelos
+    portais); se o bairro não estiver lá, a página de bairro do Netimóveis, que resolve a região a
+    partir do bairro, então qualquer segmento de região serve na URL.
     """
+    if ref := _bairro_da_tabela(bairro):
+        return ref
     try:
         html = await fetcher.get(f"{BASE}/{CIDADE}/bairro/{slugify(bairro)}")
     except FetchError:

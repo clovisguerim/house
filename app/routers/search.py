@@ -9,14 +9,14 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import SearchHistory, User
 from ..parser import parse_query
-from ..providers.base import Fetcher
+from ..providers.base import FetchError, Fetcher
 from .. import llm
 from ..config import BUSCAS_POR_HORA
 from ..geo import haversine_km
 from ..providers.casamineira import CasaMineiraProvider
 from ..providers.chavesnamao import ChavesNaMaoProvider
 from ..providers.lopes import LopesProvider
-from ..providers.netimoveis import NetimoveisProvider, localizar_bairro
+from ..providers.netimoveis import _BAIRROS, NetimoveisProvider, localizar_bairro
 from ..providers.quintoandar import QuintoAndarProvider
 from ..providers.vivareal import VivaRealProvider
 from ..schemas import Filtros, FonteStatus, HistoricoItem, Imovel, SearchRequest, SearchResponse
@@ -182,6 +182,38 @@ async def _buscar(req: SearchRequest, user: User, db: Session) -> SearchResponse
     resposta.data = registro.created_at
     resposta.usuario = user.username
     return resposta
+
+
+_PAGINAS_TESTE = {
+    "netimoveis": "https://www.netimoveis.com/locacao/minas-gerais/belo-horizonte/apartamento",
+    "quintoandar": "https://www.quintoandar.com.br/alugar/imovel/belo-horizonte-mg-brasil",
+    "chavesnamao": "https://www.chavesnamao.com.br/apartamentos-para-alugar/mg-belo-horizonte/",
+    "lopes": "https://www.lopes.com.br/busca/aluguel/br/mg/belo-horizonte/tipo/apartamento",
+    "casamineira": "https://www.casamineira.com.br/aluguel/apartamento/belo-horizonte_mg",
+    "vivareal": "https://www.vivareal.com.br/aluguel/minas-gerais/belo-horizonte/apartamento_residencial/",
+}
+
+
+@router.get("/admin/diagnostico", tags=["admin"])
+async def diagnostico(admin: User = Depends(require_admin)):
+    """Testa, a partir deste servidor, se cada portal responde (sem cache)."""
+    fetcher = Fetcher()
+
+    async def testar(nome: str, url: str):
+        t = time.time()
+        try:
+            html = await fetcher.get(url, use_cache=False)
+            return {"fonte": nome, "ok": True, "status": 200, "segundos": round(time.time() - t, 1), "bytes": len(html)}
+        except FetchError as e:
+            return {"fonte": nome, "ok": False, "status": e.status, "segundos": round(time.time() - t, 1)}
+        except Exception as e:  # timeout, DNS...
+            return {"fonte": nome, "ok": False, "erro": type(e).__name__, "segundos": round(time.time() - t, 1)}
+
+    try:
+        fontes = await asyncio.gather(*(testar(n, u) for n, u in _PAGINAS_TESTE.items()))
+    finally:
+        await fetcher.aclose()
+    return {"fontes": fontes, "bairros_na_tabela": len(_BAIRROS), "ia_ativa": llm.ativa()}
 
 
 @router.get("/fontes")

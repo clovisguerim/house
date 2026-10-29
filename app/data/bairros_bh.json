@@ -1,0 +1,1563 @@
+{
+"aarao-reis": {
+"bairro": "Aarão Reis",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.84461120896,
+"longitude": -43.92415323678
+},
+"acaiaca": {
+"bairro": "Acaiaca",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8446625,
+"longitude": -43.894791
+},
+"aeroporto": {
+"bairro": "Aeroporto",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8521703,
+"longitude": -43.9472545
+},
+"alipio-de-melo": {
+"bairro": "Alípio de Melo",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.89829,
+"longitude": -44.00298
+},
+"alpes": {
+"bairro": "Alpes",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9541099,
+"longitude": -43.9644352
+},
+"alto-barroca": {
+"bairro": "Alto Barroca",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.933174,
+"longitude": -43.9690771
+},
+"alto-caicaras": {
+"bairro": "Alto Caiçaras",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.8993,
+"longitude": -43.9712
+},
+"alto-dos-pinheiros": {
+"bairro": "Alto dos Pinheiros",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9325674,
+"longitude": -44.004875
+},
+"alvaro-camargos": {
+"bairro": "Álvaro Camargos",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.91348,
+"longitude": -44.00786
+},
+"anchieta": {
+"bairro": "Anchieta",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9490187,
+"longitude": -43.9269053
+},
+"aparecida": {
+"bairro": "Aparecida",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.8944027,
+"longitude": -43.9565162
+},
+"aparecida-setima-secao": {
+"bairro": "Aparecida Sétima Seção",
+"regiao": "",
+"regiao_slug": "",
+"latitude": -19.89055,
+"longitude": -43.96115
+},
+"araguaia": {
+"bairro": "Araguaia",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.9886727,
+"longitude": -44.0021955
+},
+"atila-de-paiva": {
+"bairro": "Átila de Paiva",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.97921287323346,
+"longitude": -44.02759627564907
+},
+"barreiro": {
+"bairro": "Barreiro",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -20.0035583,
+"longitude": -44.0054356
+},
+"barro-preto": {
+"bairro": "Barro Preto",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9233816,
+"longitude": -43.9520143
+},
+"barroca": {
+"bairro": "Barroca",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.931433,
+"longitude": -43.9635526
+},
+"belmonte": {
+"bairro": "Belmonte",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8465711,
+"longitude": -43.9012614
+},
+"belvedere": {
+"bairro": "Belvedere",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9802752,
+"longitude": -43.9465701
+},
+"betania": {
+"bairro": "Betânia",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9645,
+"longitude": -43.98921
+},
+"boa-viagem": {
+"bairro": "Boa Viagem",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9284018,
+"longitude": -43.9349481
+},
+"boa-vista": {
+"bairro": "Boa Vista",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.8940712,
+"longitude": -43.9036739
+},
+"bom-jesus": {
+"bairro": "Bom Jesus",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.8959529,
+"longitude": -43.9544094
+},
+"bonfim": {
+"bairro": "Bonfim",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9099763,
+"longitude": -43.9506794
+},
+"bonsucesso": {
+"bairro": "Bonsucesso",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.9866291,
+"longitude": -43.9796464
+},
+"braunas": {
+"bairro": "Braúnas",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.84887,
+"longitude": -43.99566
+},
+"buritis": {
+"bairro": "Buritis",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9765791,
+"longitude": -43.9674165
+},
+"cabana": {
+"bairro": "Cabana",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.9460478,
+"longitude": -44.000433
+},
+"cachoeirinha": {
+"bairro": "Cachoeirinha",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8902003,
+"longitude": -43.9474556
+},
+"caicara-adelaide": {
+"bairro": "Caiçara-Adelaide",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.90921,
+"longitude": -43.97492
+},
+"caicaras": {
+"bairro": "Caiçaras",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.89318,
+"longitude": -43.97155
+},
+"calafate": {
+"bairro": "Calafate",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9223355,
+"longitude": -43.9702945
+},
+"california": {
+"bairro": "Califórnia",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.93122,
+"longitude": -44.01599
+},
+"camargos": {
+"bairro": "Camargos",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9400693,
+"longitude": -44.018565
+},
+"campo-alegre": {
+"bairro": "Campo Alegre",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8303994,
+"longitude": -43.9470794
+},
+"canaa": {
+"bairro": "Canaã",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.7935,
+"longitude": -43.94712
+},
+"candelaria": {
+"bairro": "Candelária",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.81362,
+"longitude": -43.97003
+},
+"capitao-eduardo": {
+"bairro": "Capitão Eduardo",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.83094,
+"longitude": -43.86804
+},
+"carlos-prates": {
+"bairro": "Carlos Prates",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.913551,
+"longitude": -43.9657474
+},
+"carmo": {
+"bairro": "Carmo",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9434426,
+"longitude": -43.9320928
+},
+"castelo": {
+"bairro": "Castelo",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8793017,
+"longitude": -43.9995988
+},
+"cenaculo": {
+"bairro": "Cenáculo",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.80852763058433,
+"longitude": -43.9658943998507
+},
+"centro": {
+"bairro": "Centro",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9193308,
+"longitude": -43.9403488
+},
+"ceu-azul": {
+"bairro": "Céu Azul",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.81806,
+"longitude": -43.99728
+},
+"cidade-jardim": {
+"bairro": "Cidade Jardim",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9384767,
+"longitude": -43.9506601
+},
+"cidade-nova": {
+"bairro": "Cidade Nova",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.889239,
+"longitude": -43.9248575
+},
+"cinquentenario": {
+"bairro": "Cinquentenário",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.95179,
+"longitude": -43.98216
+},
+"colegio-batista": {
+"bairro": "Colégio Batista",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.907,
+"longitude": -43.93492
+},
+"concordia": {
+"bairro": "Concórdia",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.9034,
+"longitude": -43.9365
+},
+"conjunto-california": {
+"bairro": "Conjunto Califórnia",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.92358,
+"longitude": -44.00767
+},
+"conjunto-celso-machado": {
+"bairro": "Conjunto Celso Machado",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.8857401,
+"longitude": -44.0085143
+},
+"conjunto-helena-antipoff": {
+"bairro": "Conjunto Helena Antipoff",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.91966,
+"longitude": -43.93808
+},
+"conjunto-lagoa": {
+"bairro": "Conjunto Lagoa",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8676517,
+"longitude": -43.9979443
+},
+"copacabana": {
+"bairro": "Copacabana",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8357255,
+"longitude": -43.9905233
+},
+"coqueiros": {
+"bairro": "Coqueiros",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9003784,
+"longitude": -44.0212383
+},
+"coracao-de-jesus": {
+"bairro": "Coração de Jesus",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.94697,
+"longitude": -43.94874
+},
+"coracao-eucaristico": {
+"bairro": "Coração Eucarístico",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.92466,
+"longitude": -43.98965
+},
+"cruzeiro": {
+"bairro": "Cruzeiro",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9442583,
+"longitude": -43.9284141
+},
+"dom-bosco": {
+"bairro": "Dom Bosco",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9158582,
+"longitude": -43.9995751
+},
+"dom-cabral": {
+"bairro": "Dom Cabral",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.922023,
+"longitude": -43.9981517
+},
+"dom-joaquim": {
+"bairro": "Dom Joaquim",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8769431,
+"longitude": -43.9171523
+},
+"dom-silverio": {
+"bairro": "Dom Silvério",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.85429,
+"longitude": -43.90096
+},
+"dona-clara": {
+"bairro": "Dona Clara",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8585718,
+"longitude": -43.9404593
+},
+"engenho-nogueira": {
+"bairro": "Engenho Nogueira",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8872755,
+"longitude": -43.9754192
+},
+"ermelinda": {
+"bairro": "Ermelinda",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.8869162,
+"longitude": -43.9599953
+},
+"esplanada": {
+"bairro": "Esplanada",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.9054992,
+"longitude": -43.9042678
+},
+"estoril": {
+"bairro": "Estoril",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9622033,
+"longitude": -43.9625784
+},
+"estrela-dalva": {
+"bairro": "Estrela Dalva",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9731323,
+"longitude": -44.0615062
+},
+"estrela-do-oriente": {
+"bairro": "Estrela do Oriente",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9633232,
+"longitude": -43.9870295
+},
+"etelvina-carneiro": {
+"bairro": "Etelvina Carneiro",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8115013,
+"longitude": -43.9345292
+},
+"europa": {
+"bairro": "Europa",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.8023464,
+"longitude": -43.9682854
+},
+"eymard": {
+"bairro": "Eymard",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.862769,
+"longitude": -43.9186738
+},
+"fernao-dias": {
+"bairro": "Fernão Dias",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.87486,
+"longitude": -43.91604
+},
+"flavio-marques-lisboa": {
+"bairro": "Flávio Marques Lisboa",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.99289,
+"longitude": -43.99976
+},
+"floramar": {
+"bairro": "Floramar",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8371027,
+"longitude": -43.9348625
+},
+"floresta": {
+"bairro": "Floresta",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.9127464,
+"longitude": -43.9302006
+},
+"frei-eustaquio": {
+"bairro": "Frei Eustáquio",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.91271,
+"longitude": -44.00508
+},
+"frei-leopoldo": {
+"bairro": "Frei Leopoldo",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8077084,
+"longitude": -43.9378418
+},
+"funcionarios": {
+"bairro": "Funcionários",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.93636,
+"longitude": -43.93141
+},
+"gameleira": {
+"bairro": "Gameleira",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9310394,
+"longitude": -43.9871908
+},
+"garcas": {
+"bairro": "Garças",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.83609,
+"longitude": -43.99737
+},
+"gloria": {
+"bairro": "Glória",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.90056,
+"longitude": -44.00972
+},
+"graca": {
+"bairro": "Graça",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.90028,
+"longitude": -43.93031
+},
+"grajau": {
+"bairro": "Grajaú",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.93622,
+"longitude": -43.96446
+},
+"guarani": {
+"bairro": "Guarani",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8441046,
+"longitude": -43.9255346
+},
+"gutierrez": {
+"bairro": "Gutierrez",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9396376,
+"longitude": -43.9586691
+},
+"havai": {
+"bairro": "Havaí",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.85140120896,
+"longitude": -43.88366323678
+},
+"heliopolis": {
+"bairro": "Heliópolis",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.842646770681156,
+"longitude": -43.93836809552991
+},
+"horto-florestal": {
+"bairro": "Horto Florestal",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.8954604,
+"longitude": -43.9169574
+},
+"inconfidencia": {
+"bairro": "Inconfidência",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.90588,
+"longitude": -43.9989
+},
+"indaia": {
+"bairro": "Indaiá",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.86647,
+"longitude": -43.95141
+},
+"independencia": {
+"bairro": "Independência",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -20.02023,
+"longitude": -44.03144
+},
+"ipe": {
+"bairro": "Ipê",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.87506,
+"longitude": -43.90553
+},
+"ipiranga": {
+"bairro": "Ipiranga",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8817746,
+"longitude": -43.9322659
+},
+"itaipu": {
+"bairro": "Itaipu",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.9900111,
+"longitude": -44.0498414
+},
+"itapoa": {
+"bairro": "Itapoã",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.84267,
+"longitude": -43.95908
+},
+"itatiaia": {
+"bairro": "Itatiaia",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8690038,
+"longitude": -44.0132865
+},
+"jaqueline": {
+"bairro": "Jaqueline",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8032084,
+"longitude": -43.9424167
+},
+"jaragua": {
+"bairro": "Jaraguá",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.85751,
+"longitude": -43.95208
+},
+"jardim-alvorada": {
+"bairro": "Jardim Alvorada",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.8974724,
+"longitude": -43.9888355
+},
+"jardim-america": {
+"bairro": "Jardim América",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.94691,
+"longitude": -43.97288
+},
+"jardim-atlantico": {
+"bairro": "Jardim Atlântico",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.84673,
+"longitude": -43.97181
+},
+"jardim-felicidade": {
+"bairro": "Jardim Felicidade",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8273107,
+"longitude": -43.9269211
+},
+"jardim-guanabara": {
+"bairro": "Jardim Guanabara",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8276276,
+"longitude": -43.9358602
+},
+"jardim-leblon": {
+"bairro": "Jardim Leblon",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.8253258,
+"longitude": -43.9863816
+},
+"jardim-montanhes": {
+"bairro": "Jardim Montanhês",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -9.926993547089378,
+"longitude": -67.83765354708939
+},
+"jardim-pirineus": {
+"bairro": "Jardim Pirineus",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.9245192,
+"longitude": -43.93526850000001
+},
+"jardim-sao-jose": {
+"bairro": "Jardim São José",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9042,
+"longitude": -43.99245
+},
+"jardim-vitoria": {
+"bairro": "Jardim Vitória",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8593784,
+"longitude": -43.88240300000001
+},
+"joao-pinheiro": {
+"bairro": "João Pinheiro",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.93435,
+"longitude": -43.99499
+},
+"jonas-veiga": {
+"bairro": "Jonas Veiga",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.9190725,
+"longitude": -43.8933319
+},
+"juliana": {
+"bairro": "Juliana",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8163286,
+"longitude": -43.9436083
+},
+"lagoa": {
+"bairro": "Lagoa",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.8102037,
+"longitude": -44.0004428
+},
+"lagoinha": {
+"bairro": "Lagoinha",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.9130244,
+"longitude": -43.9425624
+},
+"leticia": {
+"bairro": "Letícia",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.79955,
+"longitude": -43.97665
+},
+"liberdade": {
+"bairro": "Liberdade",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8618358,
+"longitude": -43.9547569
+},
+"lindeia": {
+"bairro": "Lindéia",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.98276,
+"longitude": -44.04823
+},
+"lourdes": {
+"bairro": "Lourdes",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9315166,
+"longitude": -43.943439
+},
+"luxemburgo": {
+"bairro": "Luxemburgo",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9466574,
+"longitude": -43.9563632
+},
+"madre-gertrudes": {
+"bairro": "Madre Gertrudes",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9503261,
+"longitude": -44.0068212
+},
+"madri": {
+"bairro": "Madri",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.81534,
+"longitude": -43.93792
+},
+"manacas": {
+"bairro": "Manacás",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8927,
+"longitude": -43.99752
+},
+"mangabeiras": {
+"bairro": "Mangabeiras",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9554344,
+"longitude": -43.9116092
+},
+"mantiqueira": {
+"bairro": "Mantiqueira",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.7928705,
+"longitude": -43.9833316
+},
+"marajo": {
+"bairro": "Marajó",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.96116,
+"longitude": -43.97756
+},
+"maria-goretti": {
+"bairro": "Maria Goretti",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8625479,
+"longitude": -43.9091801
+},
+"maria-helena": {
+"bairro": "Maria Helena",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.798858,
+"longitude": -43.9948559
+},
+"maria-virginia": {
+"bairro": "Maria Virgínia",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.86835,
+"longitude": -43.92845
+},
+"milionarios": {
+"bairro": "Milionários",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.99142120896,
+"longitude": -44.00709323678
+},
+"minas-brasil": {
+"bairro": "Minas Brasil",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.91753,
+"longitude": -43.9900546
+},
+"minas-caixa": {
+"bairro": "Minas Caixa",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.80932,
+"longitude": -43.96023
+},
+"monsenhor-messias": {
+"bairro": "Monsenhor Messias",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9092765,
+"longitude": -43.9779281
+},
+"nazare": {
+"bairro": "Nazaré",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8507781,
+"longitude": -43.8970099
+},
+"nossa-senhora-da-saude": {
+"bairro": "Nossa Senhora da Saúde",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.86569120896,
+"longitude": -43.91151323678
+},
+"nova-cachoeirinha": {
+"bairro": "Nova Cachoeirinha",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.8840143,
+"longitude": -43.9563397
+},
+"nova-cintra": {
+"bairro": "Nova Cintra",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9480576,
+"longitude": -43.9900717
+},
+"nova-esperanca": {
+"bairro": "Nova Esperança",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.90109,
+"longitude": -43.95709
+},
+"nova-floresta": {
+"bairro": "Nova Floresta",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8930139,
+"longitude": -43.9341367
+},
+"nova-gameleira": {
+"bairro": "Nova Gameleira",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9417972,
+"longitude": -43.9926599
+},
+"nova-granada": {
+"bairro": "Nova Granada",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9413172,
+"longitude": -43.9690897
+},
+"nova-suissa": {
+"bairro": "Nova Suíssa",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.93312,
+"longitude": -43.97351
+},
+"nova-vista": {
+"bairro": "Nova Vista",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.8880676,
+"longitude": -43.8980299
+},
+"nova-york": {
+"bairro": "Nova York",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.9524624,
+"longitude": -43.9328057
+},
+"novo-gloria": {
+"bairro": "Novo Glória",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.90262,
+"longitude": -44.01647
+},
+"ouro-preto": {
+"bairro": "Ouro Preto",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8722536,
+"longitude": -43.9829877
+},
+"padre-eustaquio": {
+"bairro": "Padre Eustáquio",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.91576,
+"longitude": -43.98256
+},
+"palmares": {
+"bairro": "Palmares",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8731642,
+"longitude": -43.9338075
+},
+"palmeiras": {
+"bairro": "Palmeiras",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.967814,
+"longitude": -43.9807696
+},
+"pampulha": {
+"bairro": "Pampulha",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8638036,
+"longitude": -43.9749287
+},
+"paqueta": {
+"bairro": "Paquetá",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8695,
+"longitude": -43.9947
+},
+"paraiso": {
+"bairro": "Paraíso",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.92316,
+"longitude": -43.90211
+},
+"parque-riachuelo": {
+"bairro": "Parque Riachuelo",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8908037,
+"longitude": -43.9526083
+},
+"parque-sao-joao-batista": {
+"bairro": "Parque São João Batista",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.87822746328235,
+"longitude": -43.9434997910712
+},
+"parque-sao-jose": {
+"bairro": "Parque São José",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.96307,
+"longitude": -43.97899
+},
+"parque-sao-pedro-venda-nova": {
+"bairro": "Parque São Pedro - Venda Nova",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.8119,
+"longitude": -43.95867
+},
+"paulo-vi": {
+"bairro": "Paulo Vi",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8406975,
+"longitude": -43.8911086
+},
+"penha": {
+"bairro": "Penha",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8755599,
+"longitude": -43.9129045
+},
+"pindorama": {
+"bairro": "Pindorama",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9093101,
+"longitude": -44.0200668
+},
+"piraja": {
+"bairro": "Pirajá",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8643176,
+"longitude": -43.91486710000004
+},
+"planalto": {
+"bairro": "Planalto",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8332638,
+"longitude": -43.9525862
+},
+"pompeia": {
+"bairro": "Pompéia",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.910280284298818,
+"longitude": -43.90292740092112
+},
+"pousada-santo-antonio": {
+"bairro": "Pousada Santo Antônio",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.85797,
+"longitude": -43.88885
+},
+"prado": {
+"bairro": "Prado",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9242039,
+"longitude": -43.9623499
+},
+"primeiro-de-maio": {
+"bairro": "Primeiro de Maio",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8609747,
+"longitude": -43.9291079
+},
+"providencia": {
+"bairro": "Providência",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8556,
+"longitude": -43.92366
+},
+"renascenca": {
+"bairro": "Renascença",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.888311359558898,
+"longitude": -43.94108786866875
+},
+"rio-branco": {
+"bairro": "Rio Branco",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.8177618,
+"longitude": -43.9822283
+},
+"sagrada-familia": {
+"bairro": "Sagrada Família",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.89626,
+"longitude": -43.92405
+},
+"salgado-filho": {
+"bairro": "Salgado Filho",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9431456,
+"longitude": -43.9829637
+},
+"santa-amelia": {
+"bairro": "Santa Amélia",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.84339,
+"longitude": -43.98359
+},
+"santa-branca": {
+"bairro": "Santa Branca",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8347499,
+"longitude": -43.9678119
+},
+"santa-cruz": {
+"bairro": "Santa Cruz",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8790013,
+"longitude": -43.9411052
+},
+"santa-efigenia": {
+"bairro": "Santa Efigênia",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.92468,
+"longitude": -43.92232
+},
+"santa-ines": {
+"bairro": "Santa Inês",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.88112,
+"longitude": -43.90959
+},
+"santa-lucia": {
+"bairro": "Santa Lúcia",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.96088,
+"longitude": -43.94849
+},
+"santa-maria": {
+"bairro": "Santa Maria",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.9343386,
+"longitude": -44.0128572
+},
+"santa-monica": {
+"bairro": "Santa Mônica",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.81626,
+"longitude": -43.97411
+},
+"santa-rosa": {
+"bairro": "Santa Rosa",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8634814,
+"longitude": -43.946317
+},
+"santa-tereza": {
+"bairro": "Santa Tereza",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.9148921,
+"longitude": -43.9170461
+},
+"santa-terezinha": {
+"bairro": "Santa Terezinha",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8713253,
+"longitude": -44.0040605
+},
+"santo-agostinho": {
+"bairro": "Santo Agostinho",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9264632,
+"longitude": -43.9489377
+},
+"santo-andre": {
+"bairro": "Santo André",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.898692326058423,
+"longitude": -43.950382326058424
+},
+"santo-antonio": {
+"bairro": "Santo Antônio",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.94791,
+"longitude": -43.94403
+},
+"sao-bento": {
+"bairro": "São Bento",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.95416,
+"longitude": -43.94795
+},
+"sao-bernardo": {
+"bairro": "São Bernardo",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.84878,
+"longitude": -43.93848
+},
+"sao-cristovao": {
+"bairro": "São Cristóvão",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.90113,
+"longitude": -43.94464
+},
+"sao-francisco": {
+"bairro": "São Francisco",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.87813,
+"longitude": -43.95959
+},
+"sao-gabriel": {
+"bairro": "São Gabriel",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.849722945532243,
+"longitude": -43.91412006449166
+},
+"sao-geraldo": {
+"bairro": "São Geraldo",
+"regiao": "Leste",
+"regiao_slug": "leste",
+"latitude": -19.89898,
+"longitude": -43.89808
+},
+"sao-joao-batista": {
+"bairro": "São João Batista",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.82134,
+"longitude": -43.96247
+},
+"sao-jorge": {
+"bairro": "São Jorge",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.915652391562237,
+"longitude": -43.95141239156224
+},
+"sao-jose": {
+"bairro": "São José",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.90416,
+"longitude": -43.99425
+},
+"sao-lucas": {
+"bairro": "São Lucas",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.92953,
+"longitude": -43.9206
+},
+"sao-luiz": {
+"bairro": "São Luiz",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.85781,
+"longitude": -43.96788
+},
+"sao-marcos": {
+"bairro": "São Marcos",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.87039,
+"longitude": -43.90552
+},
+"sao-paulo": {
+"bairro": "São Paulo",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.86805,
+"longitude": -43.92356
+},
+"sao-pedro": {
+"bairro": "São Pedro",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.94568,
+"longitude": -43.93761
+},
+"sao-salvador": {
+"bairro": "São Salvador",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.89789,
+"longitude": -44.01691
+},
+"sao-tomaz": {
+"bairro": "São Tomáz",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.84105,
+"longitude": -43.94973
+},
+"savassi": {
+"bairro": "Savassi",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.937246,
+"longitude": -43.9355817
+},
+"serra": {
+"bairro": "Serra",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9405558,
+"longitude": -43.918423
+},
+"serrano": {
+"bairro": "Serrano",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8804315,
+"longitude": -44.0127543
+},
+"silveira": {
+"bairro": "Silveira",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8917944,
+"longitude": -43.9299132
+},
+"sinimbu": {
+"bairro": "Sinimbu",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.821779,
+"longitude": -43.9811575
+},
+"sion": {
+"bairro": "Sion",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9493624,
+"longitude": -43.9325869
+},
+"tirol": {
+"bairro": "Tirol",
+"regiao": "Barreiro",
+"regiao_slug": "barreiro",
+"latitude": -19.9883222,
+"longitude": -44.040799
+},
+"trevo": {
+"bairro": "Trevo",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8368129,
+"longitude": -44.0108832
+},
+"tupi": {
+"bairro": "Tupi",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8366335,
+"longitude": -43.9255568
+},
+"uniao": {
+"bairro": "União",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.88485,
+"longitude": -43.91796
+},
+"universitario": {
+"bairro": "Universitário",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.868241208959997,
+"longitude": -43.94485323678
+},
+"urca": {
+"bairro": "Urca",
+"regiao": "Pampulha",
+"regiao_slug": "pampulha",
+"latitude": -19.8715465,
+"longitude": -44.0163978
+},
+"venda-nova": {
+"bairro": "Venda Nova",
+"regiao": "Venda Nova",
+"regiao_slug": "venda-nova",
+"latitude": -19.8084764,
+"longitude": -43.9767673
+},
+"ventosa": {
+"bairro": "Ventosa",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9518008,
+"longitude": -43.9718739
+},
+"vila-amaral": {
+"bairro": "Vila Amaral",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.966429,
+"longitude": -44.2054884
+},
+"vila-cloris": {
+"bairro": "Vila Cloris",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.8224598,
+"longitude": -43.9487738
+},
+"vila-ermelinda": {
+"bairro": "Vila Ermelinda",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.88699,
+"longitude": -43.96115
+},
+"vila-magnesita": {
+"bairro": "Vila Magnesita",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.94319,
+"longitude": -44.01456
+},
+"vila-oeste": {
+"bairro": "Vila Oeste",
+"regiao": "Noroeste",
+"regiao_slug": "noroeste",
+"latitude": -19.936669,
+"longitude": -44.0019839
+},
+"vila-paris": {
+"bairro": "Vila Paris",
+"regiao": "Centro-Sul",
+"regiao_slug": "centro-sul",
+"latitude": -19.9506192,
+"longitude": -43.9502636
+},
+"vista-alegre": {
+"bairro": "Vista Alegre",
+"regiao": "Oeste",
+"regiao_slug": "oeste",
+"latitude": -19.9550055,
+"longitude": -43.9990214
+},
+"vista-do-sol": {
+"bairro": "Vista do Sol",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.8498131,
+"longitude": -43.8895773
+},
+"vitoria": {
+"bairro": "Vitória",
+"regiao": "Nordeste",
+"regiao_slug": "nordeste",
+"latitude": -19.85934120896,
+"longitude": -43.87396323678
+},
+"xodo-marize": {
+"bairro": "Xodó Marize",
+"regiao": "Norte",
+"regiao_slug": "norte",
+"latitude": -19.81917,
+"longitude": -43.93774
+}
+}

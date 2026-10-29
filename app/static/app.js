@@ -595,6 +595,24 @@ $("#new-user").addEventListener("submit", async (e) => {
   }
 });
 
+$("#diag-btn").addEventListener("click", async () => {
+  const btn = $("#diag-btn");
+  btn.disabled = true;
+  $("#diag").innerHTML = `<span class="muted">Testando…</span>`;
+  try {
+    const d = await api("/admin/diagnostico");
+    $("#diag").innerHTML = d.fontes
+      .map((f) => `<span class="source ${f.ok ? "" : "off"}">${esc(fonteNome(f.fonte))}: ${f.ok ? "ok" : esc(f.status ? `bloqueado (HTTP ${f.status})` : f.erro)} · ${f.segundos}s</span>`)
+      .concat([`<span class="source">${d.bairros_na_tabela} bairros na tabela</span>`,
+        `<span class="source ${d.ia_ativa ? "ia" : "off"}">IA ${d.ia_ativa ? "ligada" : "desligada"}</span>`])
+      .join("");
+  } catch (err) {
+    $("#diag").innerHTML = `<span class="source off">${esc(err.message)}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 // ---------- Início ----------
 if (state.token) enterApp();
 else showAuth();

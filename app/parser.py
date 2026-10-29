@@ -85,7 +85,8 @@ def parse_query(texto: str) -> Filtros:
     padroes_bairro = [
         rf"\bbairros?\s+(?:do\s+|da\s+|de\s+)?([a-z][a-z\s'-]*?){_STOP}",
         rf"\b(?:perto|proximo|proxima|ao redor|em volta|arredores)\s+(?:do|da|de|ao|a)\s+([a-z][a-z\s'-]*?){_STOP}",
-        rf"\b(?:raio\s+de\s+[\d.,]+\s*\w+\s+)(?:do|da|de|no|na)\s+([a-z][a-z\s'-]*?){_STOP}",
+        rf"\b(?:raio\s+(?:de\s+)?[\d.,]+\s*\w+\s+)(?:do|da|de|no|na)\s+([a-z][a-z\s'-]*?){_STOP}",
+        rf"\b[\d.,]+\s*km\s+(?:do|da|de)\s+([a-z][a-z\s'-]*?){_STOP}",
         rf"\b(?:no|na)\s+([a-z][a-z\s'-]*?){_STOP}",
     ]
     for rx in padroes_bairro:
@@ -104,6 +105,13 @@ def parse_query(texto: str) -> Filtros:
             preco_max = _valor(m.group(1), m.group(2))
         if m := re.search(rf"(?:acima de|a partir de|minimo|mais de)\s+r?\$?\s*{num}(?!\s*(?:km|m\b|quartos?|vagas?))", t):
             preco_min = _valor(m.group(1), m.group(2))
+        # "2500 reais no máximo", "valor de 2500", "valor máximo de 3 mil", "aluguel de 2000", "3 mil reais"
+        if preco_max is None and (m := re.search(
+                rf"(?:valor|preco|aluguel)\s+(?:maximo\s+)?(?:de\s+)?(?:ate\s+)?r?\$?\s*{num}(?!\s*(?:km|m\b|metros|quartos?|vagas?))"
+                rf"|{num}\s*(?:reais|r\$)?\s*(?:no maximo|maximo|max)\b"
+                rf"|{num}\s*reais", t)):
+            g = [x for x in m.groups() if x is not None]
+            preco_max = _valor(g[0], g[1] if len(g) > 1 and g[1] in ("mil", "k") else None)
         if preco_max is None and (m := re.search(rf"r\$\s*{num}", t)):
             preco_max = _valor(m.group(1), m.group(2))
 
