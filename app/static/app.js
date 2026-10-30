@@ -13,7 +13,7 @@ const state = {
   token: localStorage.getItem("house_token"),
   me: null,
   result: null,       // SearchResponse exibido
-  mode: lerPreferencia("house_modo", "lista"),  // "lista" ou "mapa", lembrado entre visitas
+  mode: lerPreferencia("house_modo", "mapa"),  // "lista" ou "mapa", lembrado entre visitas
   histScope: "meu",
   history: [],
   map: null,
