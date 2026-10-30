@@ -533,7 +533,10 @@ async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: in
     prioridades = {c: p for c, p in (prioridades or {}).items() if c in CRITERIOS and p in PESOS}
     observacao = (observacao or "").strip()[:300] or None
     instrucoes = bloco_regras(regras or []) + _bloco_prioridades(prioridades, observacao)
-    candidatos = priorizar(imoveis, prioridades, filtros.caracteristicas)[:max(40, top + 20)]
+    ordenados = priorizar(imoveis, prioridades, filtros.caracteristicas)
+    corte = max(40, top + 20)
+    # Anúncios adicionados à mão sempre entram na análise, mesmo além do corte
+    candidatos = ordenados[:corte] + [im for im in ordenados[corte:] if im.manual]
     top = min(top, len(candidatos))
     codigos = {f"c{k}": im for k, im in enumerate(candidatos, 1)}
     filtros_json = filtros.model_dump(exclude_defaults=True, exclude={"interpretado_por"})
@@ -651,3 +654,53 @@ async def regra_de_feedback(pedido: str, nota: int, justificativa: str, imovel: 
     dados = await _json(modelo_interpretar(), _SYSTEM_REGRA, json.dumps(contexto, ensure_ascii=False),
                         _SCHEMA_REGRA, 2000)
     return dados["regra"].strip()[:500]
+
+
+# --- 5. Ler um anúncio avulso (link colado pelo usuário) -----------------------------------------
+
+_SCHEMA_ANUNCIO_AVULSO = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["e_anuncio_de_aluguel", "titulo", "tipo", "endereco", "bairro", "aluguel", "condominio", "iptu",
+                 "quartos", "banheiros", "vagas", "area_m2", "andar", "aceita_pet", *GARANTIAS, "mobiliado",
+                 "destaques", "caracteristicas"],
+    "properties": {
+        "e_anuncio_de_aluguel": {"type": "boolean"},
+        "titulo": _anulavel("string"),
+        "tipo": {"anyOf": [{"type": "string", "enum": TIPOS}, {"type": "null"}]},
+        "endereco": _anulavel("string"),
+        "bairro": _anulavel("string"),
+        "aluguel": _anulavel("number"),
+        "condominio": _anulavel("number"),
+        "iptu": _anulavel("number"),
+        "quartos": _anulavel("integer"),
+        "banheiros": _anulavel("integer"),
+        "vagas": _anulavel("integer"),
+        "area_m2": _anulavel("number"),
+        "andar": _anulavel("integer"),
+        "aceita_pet": _anulavel("boolean"),
+        **{g: _anulavel("boolean") for g in GARANTIAS},
+        "mobiliado": _anulavel("boolean"),
+        "destaques": {"type": "array", "items": {"type": "string"}},
+        "caracteristicas": {"type": "array", "items": {"type": "string"}},
+    },
+}
+
+_SYSTEM_ANUNCIO_AVULSO = """Você recebe o conteúdo de UM anúncio de imóvel (texto copiado da página e/ou \
+dados estruturados dela) e extrai os dados em português. Use null para o que o anúncio não disser; nunca chute.
+
+- e_anuncio_de_aluguel: false se o conteúdo não for um anúncio de imóvel para alugar (ex.: página de busca, \
+anúncio de venda, erro, página de login).
+- aluguel, condominio, iptu: valores MENSAIS em reais, só números (IPTU anual: divida por 12). Ignore valores \
+de outros imóveis "semelhantes" ou "recomendados" que aparecem na página.
+- tipo: apartamento, casa, cobertura, area-privativa (apartamento com área externa privativa) ou kitnet.
+- endereco: rua e número se houver, sem o bairro; bairro: só o nome do bairro (Belo Horizonte).
+- aceita_pet e garantias (seguro_fianca, fiador, caucao, titulo_capitalizacao): true se aceita, false se \
+recusa/proíbe ou se o anúncio lista as aceitas e ela ficou de fora; "sem fiador" sozinho = null.
+- andar: andar da unidade (0 = térreo). mobiliado: true/false se o anúncio disser.
+- destaques: até 4 pontos fortes curtos. caracteristicas: itens do imóvel/condomínio (ex.: "Portaria 24h")."""
+
+
+async def extrair_anuncio(conteudo: str) -> dict:
+    """Dados de um anúncio avulso a partir do texto/estrutura da página."""
+    return await _json(modelo_extrair(), _SYSTEM_ANUNCIO_AVULSO, conteudo[:30000], _SCHEMA_ANUNCIO_AVULSO, 4000)

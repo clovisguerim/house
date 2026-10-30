@@ -98,6 +98,9 @@ class Imovel(BaseModel):
     atende: list[str] = Field(default=[], description="Quais desejos da busca (filtros.caracteristicas) o anúncio atende")
     descricao: str | None = Field(default=None, exclude=True)
     onibus: dict | None = Field(default=None, description="Linhas de ônibus (BHTRANS) a até 500 m: pontos, linhas, distância")
+    manual: bool = Field(default=False, description="Adicionado à mão pelo link (não veio da busca)")
+    local_aproximado: bool = Field(default=False, description="Coordenada é o centro do bairro, não o endereço")
+    avisos: list[str] = Field(default=[], description="O que não bate com os filtros da busca (anúncio manual)")
     novo: bool = Field(default=False, description="Não estava na busca comparada")
     preco_anterior: float | None = Field(default=None, description="Total mensal na busca comparada, se mudou")
 

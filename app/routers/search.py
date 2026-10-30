@@ -15,7 +15,7 @@ from ..db import get_db
 from ..models import SearchHistory, User
 from ..parser import desejos_atendidos, parse_query
 from ..providers.base import FetchError, Fetcher
-from .. import llm, onibus
+from .. import llm, manual, onibus
 from ..config import BUSCAS_POR_HORA, USER_AGENT
 from ..geo import haversine_km
 from ..providers.casamineira import CasaMineiraProvider
@@ -151,6 +151,14 @@ async def _buscar(req: SearchRequest, user: User, db: Session) -> SearchResponse
         if row and row.results_json and (row.user_id == user.id or user.is_admin):
             anterior = (row.id, row.created_at, SearchResponse.model_validate_json(row.results_json))
     resposta = await executar_busca(req, regras_para(db, user), anterior)
+    if anterior:
+        # Anúncios adicionados à mão na busca de origem continuam na nova (a busca não os acha sozinha)
+        urls = {im.url for im in resposta.imoveis}
+        manuais = [im for im in anterior[2].imoveis if im.manual and im.url not in urls]
+        for im in manuais:
+            im.novo, im.preco_anterior = False, None
+        resposta.imoveis = manuais + resposta.imoveis
+        resposta.total = len(resposta.imoveis)
     return salvar_busca(db, user, resposta)
 
 
@@ -377,6 +385,60 @@ def abrir_historico(historico_id: int, user: User = Depends(get_current_user), d
         raise HTTPException(status_code=404, detail="Esta busca é anterior ao salvamento de resultados")
     resposta = SearchResponse.model_validate_json(row.results_json)
     resposta.historico_id, resposta.data, resposta.usuario = row.id, row.created_at, dono.username if dono else None
+    return resposta
+
+
+class AnuncioManualIn(BaseModel):
+    url: str = Field(min_length=10, max_length=2000)
+    texto: str | None = Field(default=None, max_length=60000, description="Texto da página, se o site bloquear")
+    campos: dict = Field(default={}, description="Correções à mão: aluguel, condominio, iptu, quartos, vagas, "
+                                                  "area_m2, tipo, bairro, endereco")
+
+
+def _gravar_resultados(row: SearchHistory, busca: SearchResponse, db: Session) -> SearchResponse:
+    busca.total = len(busca.imoveis)
+    row.results_json = busca.model_dump_json(exclude={"historico_id", "data", "usuario"})
+    row.total_results = busca.total
+    db.commit()
+    busca.historico_id, busca.data = row.id, row.created_at
+    return busca
+
+
+@router.post("/historico/{historico_id}/anuncios", response_model=SearchResponse)
+async def adicionar_anuncio(historico_id: int, req: AnuncioManualIn, user: User = Depends(get_current_user),
+                            db: Session = Depends(get_db)):
+    """Inclui na busca um anúncio colado à mão (link + texto, se o site bloquear). A IA lê os dados."""
+    row, dono = _do_usuario(historico_id, user, db)
+    if not row.results_json:
+        raise HTTPException(status_code=404, detail="Esta busca não tem resultados salvos")
+    busca = SearchResponse.model_validate_json(row.results_json)
+    _checar_limite(user)
+    _em_andamento.add(user.id)
+    try:
+        im = await manual.analisar(req.url, req.texto, req.campos, busca)
+    except manual.AnuncioErro as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    finally:
+        _em_andamento.discard(user.id)
+    # Mesmo link de novo = substitui; manuais ficam no topo da lista
+    busca.imoveis = [im] + [x for x in busca.imoveis if not (x.manual and (x.id == im.id or x.url == im.url))]
+    resposta = _gravar_resultados(row, busca, db)
+    resposta.usuario = dono.username if dono else None
+    return resposta
+
+
+@router.delete("/historico/{historico_id}/anuncios/{imovel_id}", response_model=SearchResponse)
+def remover_anuncio(historico_id: int, imovel_id: str, user: User = Depends(get_current_user),
+                    db: Session = Depends(get_db)):
+    """Tira da busca um anúncio que foi adicionado à mão."""
+    row, dono = _do_usuario(historico_id, user, db)
+    busca = SearchResponse.model_validate_json(row.results_json)
+    antes = len(busca.imoveis)
+    busca.imoveis = [x for x in busca.imoveis if not (x.manual and x.id == imovel_id)]
+    if len(busca.imoveis) == antes:
+        raise HTTPException(status_code=404, detail="Anúncio manual não encontrado nesta busca")
+    resposta = _gravar_resultados(row, busca, db)
+    resposta.usuario = dono.username if dono else None
     return resposta
 
 

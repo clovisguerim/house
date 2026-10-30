@@ -72,6 +72,8 @@ O PC precisa estar ligado e conectado. `.\publicar-tailscale.ps1 -Parar` remove 
 | GET | `/admin/historico?usuario=` | buscas de todos os usuários (admin) |
 | POST/GET | `/historico/{id}/relatorio` | gera (`top` 1–40, `prioridades`, `observacao`) / reabre o relatório da IA |
 | GET | `/relatorio/criterios` | critérios que podem ser priorizados no relatório |
+| POST | `/historico/{id}/anuncios` | inclui anúncio por link (`url`, `texto` colado se o site bloquear, `campos` à mão) |
+| DELETE | `/historico/{id}/anuncios/{imovel_id}` | remove um anúncio adicionado à mão |
 | POST/GET | `/historico/{id}/feedback` | avalia o relatório (nota 1–5 + justificativa; vira regra) / lista avaliações |
 | GET/POST/DELETE | `/admin/onibus` | base de ônibus em uso / envia GTFS (multipart: convencional, suplementar) / volta à original |
 | GET/POST | `/regras` | regras da IA visíveis (compartilhadas + suas) / cria regra |

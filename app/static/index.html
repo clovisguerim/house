@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>House · Aluguel em BH</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/static/styles.css?v=10">
+  <link rel="stylesheet" href="/static/styles.css?v=11">
 </head>
 <body>
 
@@ -119,8 +119,41 @@
               <button class="seg-btn active" data-mode="mapa">Mapa</button>
             </div>
             <button class="btn ghost small" id="csv">Exportar CSV</button>
+            <button class="btn small" id="add-btn" type="button">➕ Adicionar anúncio</button>
           </div>
         </div>
+        <section id="add-anuncio" class="add-anuncio" hidden>
+          <h3>➕ Adicionar um anúncio por link</h3>
+          <p class="muted">Viva Real, ZAP, OLX, site de imobiliária… A IA lê o anúncio e ele entra nesta busca (e no relatório).
+            Se o site bloquear o acesso do House, abra o anúncio no seu navegador, aperte <b>Ctrl+A</b> e <b>Ctrl+C</b> e cole o texto abaixo.</p>
+          <form id="add-form" class="stack">
+            <label>Link do anúncio <input name="url" type="url" placeholder="https://www.vivareal.com.br/imovel/..." required></label>
+            <label>Texto do anúncio (cole aqui se o site bloquear)
+              <textarea name="texto" rows="4" maxlength="60000" placeholder="Cole aqui o conteúdo da página do anúncio"></textarea></label>
+            <details>
+              <summary>Corrigir ou completar à mão (opcional)</summary>
+              <div class="add-campos">
+                <label>Aluguel (R$) <input name="aluguel" type="number" min="0" step="1"></label>
+                <label>Condomínio (R$) <input name="condominio" type="number" min="0" step="1"></label>
+                <label>IPTU/mês (R$) <input name="iptu" type="number" min="0" step="1"></label>
+                <label>Quartos <input name="quartos" type="number" min="0" step="1"></label>
+                <label>Vagas <input name="vagas" type="number" min="0" step="1"></label>
+                <label>Área (m²) <input name="area_m2" type="number" min="0" step="1"></label>
+                <label>Tipo
+                  <select name="tipo"><option value="">(da IA)</option><option value="apartamento">Apartamento</option>
+                    <option value="casa">Casa</option><option value="cobertura">Cobertura</option>
+                    <option value="area-privativa">Área privativa</option><option value="kitnet">Kitnet</option></select></label>
+                <label>Bairro <input name="bairro" placeholder="Ex.: Castelo"></label>
+                <label class="largo">Endereço <input name="endereco" placeholder="Ex.: Rua Castelo de Lisboa, 100"></label>
+              </div>
+            </details>
+            <div class="row">
+              <button class="btn primary small" type="submit">Analisar e incluir</button>
+              <button class="btn ghost small" type="button" id="add-fechar">Fechar</button>
+              <span id="add-msg" class="muted"></span>
+            </div>
+          </form>
+        </section>
         <section id="comparacao" class="comparacao" hidden></section>
         <div class="relatorio-bar">
           <span>📝 <strong>Relatório da IA</strong> com os</span>
@@ -252,6 +285,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="/static/app.js?v=10"></script>
+<script src="/static/app.js?v=12"></script>
 </body>
 </html>

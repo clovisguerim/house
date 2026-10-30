@@ -54,7 +54,7 @@ function linksMapa(i) {
   const out = [];
   if (i.latitude != null && i.longitude != null) {
     // Sem rua no endereço, a coordenada costuma ser o centro do bairro: a vista é aproximada
-    const aprox = !/\b(rua|r\.|av\.?|avenida|alameda|al\.|travessa|pra[cç]a|rodovia|estrada|beco)\b/i.test(i.endereco || "");
+    const aprox = i.local_aproximado || !/\b(rua|r\.|av\.?|avenida|alameda|al\.|travessa|pra[cç]a|rodovia|estrada|beco)\b/i.test(i.endereco || "");
     const sv = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${i.latitude},${i.longitude}`;
     out.push(`<a href="${esc(sv)}" target="_blank" rel="noopener noreferrer" title="${aprox ? "Localização aproximada (o anúncio não informa a rua)" : "Abre o Street View na localização do anúncio"}">🧍 Street View${aprox ? " (aprox.)" : ""}</a>`);
   }
@@ -520,6 +520,7 @@ function card(i) {
         ${foto ? `<img src="${esc(safeUrl(foto))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""}
         <span class="tipo">${esc(ROTULO_TIPO[i.tipo] || i.tipo || "imóvel")}</span>
         ${i.novo ? `<span class="novo">🆕 Novo</span>` : ""}
+        ${i.manual ? `<span class="manual" title="Adicionado à mão pelo link">✍️ Adicionado</span>` : ""}
         ${i.distancia_km != null ? `<span class="dist">${i.distancia_km.toLocaleString("pt-BR")} km</span>` : ""}
       </div>
       <div class="card-body">
@@ -534,6 +535,8 @@ function card(i) {
         </div>
         <div class="addr"><strong>${esc(i.bairro || "")}</strong>${esc(i.endereco || "")}</div>
         <div class="specs">${specs.map((s) => `<span>${esc(s)}</span>`).join("")}</div>
+        ${i.avisos?.length ? `<div class="flags">${i.avisos.map((a) => `<span class="flag no-risco">⚠ ${esc(a)}</span>`).join("")}</div>` : ""}
+        ${i.local_aproximado ? `<div class="muted aprox">📍 localização aproximada (centro do bairro)</div>` : ""}
         ${blocoOnibus(i)}
         <div class="flags">
           ${flag("Pet", i.aceita_pet)}
@@ -545,7 +548,7 @@ function card(i) {
         ${i.atende?.length ? `<div class="flags">${i.atende.map((a) => `<span class="flag yes">✓ ${esc(a)}</span>`).join("")}</div>` : ""}
         ${i.destaques?.length ? `<ul class="destaques">${i.destaques.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>` : ""}
         <div class="card-foot">
-          <span class="muted">${esc(fonteNome(i.fonte))} · #${esc(i.id)}</span>
+          <span class="muted">${esc(fonteNome(i.fonte))}${i.manual ? ` · <button type="button" class="link-btn" data-remover-manual="${esc(i.id)}">remover</button>` : ` · #${esc(i.id)}`}</span>
           <a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">Ver anúncio ↗</a>
         </div>
         <div class="card-mapa">${linksMapa(i)}
@@ -812,6 +815,63 @@ $("#diag-btn").addEventListener("click", async () => {
     $("#diag").innerHTML = `<span class="source off">${esc(err.message)}</span>`;
   } finally {
     btn.disabled = false;
+  }
+});
+
+// ---------- Anúncio adicionado à mão por link ----------
+$("#add-btn").addEventListener("click", () => {
+  const p = $("#add-anuncio");
+  p.hidden = !p.hidden;
+  if (!p.hidden) {
+    $("#add-msg").textContent = "";
+    p.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+});
+$("#add-fechar").addEventListener("click", () => ($("#add-anuncio").hidden = true));
+
+async function aplicarBuscaAtualizada(res) {
+  const temRelatorio = !$("#relatorio").hidden;
+  showResult(res);
+  if (temRelatorio) await carregarRelatorio(res.historico_id);  // mantém o relatório aberto
+}
+
+$("#add-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!state.result?.historico_id) return;
+  const f = new FormData(e.target);
+  const campos = {};
+  for (const k of ["aluguel", "condominio", "iptu", "quartos", "vagas", "area_m2"]) if (f.get(k)) campos[k] = +f.get(k);
+  for (const k of ["tipo", "bairro", "endereco"]) if (f.get(k)?.trim()) campos[k] = f.get(k).trim();
+  const btn = e.target.querySelector("button[type=submit]");
+  btn.disabled = true;
+  $("#add-msg").textContent = "Lendo o anúncio…";
+  try {
+    const res = await api(`/historico/${state.result.historico_id}/anuncios`, {
+      method: "POST", json: { url: f.get("url"), texto: f.get("texto") || null, campos },
+    });
+    e.target.reset();
+    $("#add-anuncio").hidden = true;
+    await aplicarBuscaAtualizada(res);
+    const card = $("#cards .card");
+    if (card) {
+      card.classList.add("hl");
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  } catch (err) {
+    $("#add-msg").textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("#cards").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-remover-manual]");
+  if (!b || !state.result?.historico_id) return;
+  if (!confirm("Remover este anúncio adicionado à mão desta busca?")) return;
+  try {
+    await aplicarBuscaAtualizada(await api(`/historico/${state.result.historico_id}/anuncios/${encodeURIComponent(b.dataset.removerManual)}`, { method: "DELETE" }));
+  } catch (err) {
+    alert(err.message);
   }
 });
 

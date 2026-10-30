@@ -357,3 +357,21 @@ ul.ask li::marker { content: "? "; color: var(--primary); }
 .chip.prio-essencial { background: #5b3cc4; color: #fff; border-color: transparent; }
 .chip.prio-essencial b { color: #e4dcff; }
 .chip.prio-importante { background: #e4dcff; color: #3b2a85; border-color: transparent; }
+
+/* Anúncio adicionado à mão */
+.add-anuncio {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 14px;
+}
+.add-anuncio h3 { margin: 0 0 4px; font-size: 16px; }
+.add-anuncio p { margin: 0 0 10px; font-size: 13px; }
+.add-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
+.add-campos .largo { grid-column: span 2; }
+.add-anuncio summary { cursor: pointer; color: var(--primary); font-size: 14px; }
+.card-img .manual {
+  position: absolute; bottom: 10px; right: 10px; background: #0f766e; color: #fff;
+  font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+}
+.flag.no-risco { background: var(--warn-bg); color: var(--warn); }
+.aprox { font-size: 12px; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--no); cursor: pointer; font: inherit; text-decoration: underline; }

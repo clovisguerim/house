@@ -9,7 +9,7 @@ lê os anúncios e escreve um relatório com os melhores.
 
 1. [Acesso e conta](#1-acesso-e-conta)
 2. [Fazendo uma busca](#2-fazendo-uma-busca)
-3. [Entendendo os resultados](#3-entendendo-os-resultados)
+3. [Entendendo os resultados](#3-entendendo-os-resultados) e [adicionar anúncio por link](#adicionar-um-anúncio-por-link-viva-real-zap-olx)
 4. [Relatório da IA](#4-relatório-da-ia) e [avaliação → regras da IA](#avaliar-o-relatório-e-as-regras-da-ia)
 5. [Histórico e comparação ao refazer](#5-histórico)
 6. [Administração (admins)](#6-administração-admins)
@@ -130,6 +130,28 @@ Cada marcador é um imóvel (clique para ver preço e link). O ponto vermelho é
 o círculo azul, o raio pedido.
 
 ---
+
+### Adicionar um anúncio por link (Viva Real, ZAP, OLX…)
+
+Achou um imóvel num portal que o House não busca sozinho? Clique em **➕ Adicionar anúncio** (acima dos
+resultados), cole o **link** e clique em **Analisar e incluir**. A IA lê o anúncio (aluguel, condomínio,
+IPTU, quartos, vagas, endereço, pet, garantias…) e ele entra **no topo desta busca** com o selo
+**✍️ Adicionado**.
+
+![Adicionar anúncio por link](img/14-adicionar-anuncio.jpg)
+
+- **Site que bloqueia** (Viva Real, ZAP, OLX, Casa Mineira…): o House avisa. Abra o anúncio no seu
+  navegador, aperte **Ctrl+A** e **Ctrl+C** e cole no campo **Texto do anúncio**.
+- **Corrigir ou completar à mão**: o que você digitar ali vale mais que a leitura da IA. Sem IA ligada,
+  informe pelo menos o aluguel.
+- **Localização**: vem da página quando ela publica as coordenadas; senão é o centro do bairro
+  (*localização aproximada*), usado para distância, mapa, ônibus e Street View.
+- **⚠ avisos** mostram o que não bate com os filtros da busca (ex.: *aluguel acima de R$ 2.700*) — o
+  anúncio entra mesmo assim.
+- O anúncio **entra no relatório da IA**, pode ser **avaliado** (e virar regra) e **continua na busca
+  ao Refazer**. O link *remover* no card tira da busca. Colar o mesmo link de novo atualiza o anúncio.
+
+![Anúncio adicionado](img/15-anuncio-adicionado.jpg)
 
 ## 4. Relatório da IA
 
