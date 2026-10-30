@@ -1,5 +1,7 @@
 # House – busca de imóveis para alugar em BH
 
+> 📖 **[Manual do usuário](docs/MANUAL.md)** – como usar o site, com prints de cada tela.
+
 API (FastAPI + SQLite) que recebe um texto livre como
 `casa ou apartamento 3 quartos num raio de 10 km do bairro gloria`,
 transforma em filtros e busca anúncios de locação em Belo Horizonte.
