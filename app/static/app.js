@@ -374,6 +374,7 @@ function renderRelatorio(rel) {
             ${linksMapa(i) ? ` · ${linksMapa(i)}` : ""}
           </div>
           <p>${esc(r.por_que)}${r.sem_ia ? ` <span class="badge" title="A IA não comentou este; entrou pela ordem do app">sem comentário da IA</span>` : ""}</p>
+          ${blocoOnibus(i)}
           <div class="rel-cols">
             <div><h4>Pontos fortes</h4>${lista(r.pontos_fortes, "ok")}</div>
             <div><h4>Atenção</h4>${lista(r.pontos_de_atencao, "warn")}</div>

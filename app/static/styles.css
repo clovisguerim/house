@@ -335,3 +335,5 @@ ul.ask li::marker { content: "? "; color: var(--primary); }
 .onibus summary { cursor: pointer; }
 .onibus ul { margin: 6px 0 0; padding-left: 18px; max-height: 180px; overflow-y: auto; }
 .onibus li { margin: 2px 0; }
+/* Na impressão do relatório, a lista de ônibus sai aberta */
+@media print { details.onibus > ul { display: block !important; } details.onibus summary::marker { content: ""; } }
