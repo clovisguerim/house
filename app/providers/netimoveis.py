@@ -166,10 +166,13 @@ class NetimoveisProvider(Provider):
             for t in filtros.tipos if t in TIPO_SLUG for loc in locais
         ]
 
+        bloqueios: list[int] = []
+
         async def listar(url: str) -> list[Imovel]:
             try:
                 html = await fetcher.get(url)
-            except FetchError:
+            except FetchError as e:
+                bloqueios.append(e.status)
                 return []
             loc = _localizacao(html)
             if ref and filtros.raio_km and loc and loc.get("tipo") == "Regiao":
@@ -182,6 +185,10 @@ class NetimoveisProvider(Provider):
         for lote in await asyncio.gather(*(listar(u) for u in urls)):
             for im in lote:
                 vistos.setdefault(im.id, im)
+        # Todas as páginas recusadas com 403/429: o site está bloqueando este servidor
+        if urls and len(bloqueios) == len(urls) and all(s in (403, 429) for s in bloqueios):
+            msg = "Netimóveis bloqueou o acesso a partir deste servidor (funciona rodando no seu PC)"
+            return [], FonteStatus(fonte=self.name, ok=False, mensagem=msg)
         candidatos = [im for im in vistos.values() if passa_basico(im, filtros)]
 
         # Anúncios do próprio bairro primeiro, caso max_detalhes corte a lista
