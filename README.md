@@ -2,7 +2,7 @@
 
 > 📖 **[Manual do usuário](docs/MANUAL.md)** – como usar o site, com prints de cada tela.
 
-API (FastAPI + SQLite) que recebe um texto livre como
+API (FastAPI; SQLite no PC, Postgres no Render) com interface web, que recebe um texto livre como
 `casa ou apartamento 3 quartos num raio de 10 km do bairro gloria`,
 transforma em filtros e busca anúncios de locação em Belo Horizonte.
 
@@ -70,7 +70,8 @@ O PC precisa estar ligado e conectado. `.\publicar-tailscale.ps1 -Parar` remove 
 | GET | `/historico` | buscas do usuário (quem, quando, texto, filtros, total) |
 | GET/DELETE | `/historico/{id}` | reabre os resultados salvos / exclui (dono ou admin) |
 | GET | `/admin/historico?usuario=` | buscas de todos os usuários (admin) |
-| POST/GET | `/historico/{id}/relatorio` | gera (top 1–40) / reabre o relatório da IA |
+| POST/GET | `/historico/{id}/relatorio` | gera (`top` 1–40, `prioridades`, `observacao`) / reabre o relatório da IA |
+| GET | `/relatorio/criterios` | critérios que podem ser priorizados no relatório |
 | POST/GET | `/historico/{id}/feedback` | avalia o relatório (nota 1–5 + justificativa; vira regra) / lista avaliações |
 | GET/POST/DELETE | `/admin/onibus` | base de ônibus em uso / envia GTFS (multipart: convencional, suplementar) / volta à original |
 | GET/POST | `/regras` | regras da IA visíveis (compartilhadas + suas) / cria regra |

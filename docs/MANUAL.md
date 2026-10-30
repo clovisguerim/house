@@ -88,7 +88,7 @@ IPTU, pet…). Mais = mais completo e mais lento.
 
 ## 3. Entendendo os resultados
 
-![Cabeçalho dos resultados](img/05-resultados.jpg)
+![Cabeçalho dos resultados, com a comparação ao refazer e a faixa do relatório](img/05-resultados.jpg)
 
 - **Referência**: o bairro usado como centro do raio e quem fez a busca.
 - **Fontes** (verde = respondeu, amarelo = bloqueado ou com erro) e o estado da **IA**.
@@ -101,7 +101,7 @@ o mais perto, depois o mais barato.
 
 ### Os cards
 
-![Cards de imóveis](img/06-cards.jpg)
+![Cards com preço que mudou, linhas de ônibus abertas e links de Street View](img/06-cards.jpg)
 
 Cada card mostra:
 
@@ -144,6 +144,8 @@ condomínio baixo; mais perto do bairro; mais quartos; área maior; mobiliado; m
 perto; atender às prioridades escritas na busca — marcando **Desejável**, **Importante** ou
 **Essencial** (o resto fica *Indiferente*). Há também um campo livre *Outras prioridades*.
 
+![Painel de prioridades do relatório](img/11-prioridades.jpg)
+
 - **Essencial**: quem confirma vem antes; quem não informa desce e vira pergunta ao anunciante; quem
   nega fica por último.
 - As prioridades também escolhem **quais imóveis a IA analisa**: um imóvel que aceita caução entra na
@@ -178,6 +180,8 @@ buscas e relatórios**: ela orienta a interpretação do pedido e o ranking.
 
 Na aba **Regras da IA** você vê as regras compartilhadas e as suas privadas e pode:
 
+![Aba Regras da IA](img/12-regras.jpg)
+
 - **Adicionar** uma regra escrita à mão;
 - **Editar** o texto, **ativar/desativar** e **compartilhar ou não** (as suas; admins podem em todas);
 - **Excluir**.
@@ -194,7 +198,8 @@ o que o pedido diz explicitamente, vale o pedido.
 Toda busca fica salva com quem pesquisou, quando, o texto, os filtros e os resultados.
 
 - **Abrir**: mostra os resultados salvos (sem buscar de novo) e o relatório, se houver (📝).
-- **Refazer**: roda a mesma busca de novo, com dados atuais, e **compara com a busca de origem**:
+- **Refazer**: roda a mesma busca de novo, com dados atuais, e **compara com a busca de origem** (veja o
+  painel no [print dos resultados](#3-entendendo-os-resultados)):
   - **🆕 Novo** nos cards que não estavam antes (e a opção *mostrar só os novos*);
   - **"era R$ …"** quando o total mensal mudou (verde se caiu, vermelho se subiu);
   - **Ver os que saíram**: anúncios que não vieram desta vez, com a verificação de cada um —
@@ -227,6 +232,8 @@ quiser, do [suplementar](https://dados.pbh.gov.br/dataset/feed-gtfs-estatico-do-
 envie em **Atualizar base de ônibus** e aguarde o processamento (até 1–2 min). A base nova vale na hora
 para as próximas buscas (as já feitas mudam ao clicar em **Refazer**) e fica guardada no banco.
 **Voltar à base original** descarta a enviada. Arquivos que não sejam GTFS de BH são recusados.
+
+![Diagnóstico e base de ônibus](img/13-base-onibus.jpg)
 
 ---
 
