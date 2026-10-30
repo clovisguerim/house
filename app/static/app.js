@@ -18,6 +18,7 @@ const state = {
   history: [],
   map: null,
   markers: {},
+  ranking: {},       // "fonte:id" -> posição no relatório da IA (marcadores numerados no mapa)
 };
 
 const EXEMPLOS = [
@@ -310,6 +311,7 @@ function showResult(res) {
   $("#interp").innerHTML = chipsFiltros(res.filtros);
   $("#relatorio").hidden = true;
   $("#rel-msg").textContent = "";
+  state.ranking = {};
   renderResults();
 }
 
@@ -325,7 +327,8 @@ function renderRelatorio(rel) {
         <div class="rel-pos">${n + 1}º<span class="rel-nota" title="Alinhamento com a busca">${r.nota}/10</span></div>
         ${foto ? `<img class="rel-foto" src="${esc(safeUrl(foto))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<div class="rel-foto"></div>`}
         <div class="rel-corpo">
-          <h3>${esc(r.titulo_curto)}</h3>
+          <h3>${esc(r.titulo_curto)}
+            ${i.latitude != null ? `<button type="button" class="btn small ghost" data-ver-mapa="${esc(r.id)}">📍 Ver no mapa</button>` : ""}</h3>
           <div class="rel-meta">
             <strong>${brl(i.total_mensal ?? i.aluguel)}</strong>/mês
             · ${esc(i.endereco || i.bairro || "")}
@@ -348,16 +351,42 @@ function renderRelatorio(rel) {
         <div class="muted">Gerado por ${esc(rel.modelo)} em ${dataHora(rel.gerado_em)}, entre ${rel.candidatos_avaliados} candidatos.
           A IA só usa os dados dos anúncios — confirme tudo com o anunciante.</div>
       </div>
-      <button class="btn small" id="rel-print">Imprimir / PDF</button>
+      <div class="rel-acoes">
+        <button class="btn small" id="rel-toggle" type="button">Recolher</button>
+        <button class="btn small" id="rel-print" type="button">Imprimir / PDF</button>
+      </div>
     </div>
-    <p class="rel-resumo">${esc(rel.resumo)}</p>
-    ${itens}
-    <h3>Comparativo</h3>
-    <p>${esc(rel.comparativo)}</p>
-    ${rel.proximos_passos?.length ? `<h3>Próximos passos</h3>${lista(rel.proximos_passos, "passos")}` : ""}`;
+    <div class="rel-conteudo">
+      <p class="rel-resumo">${esc(rel.resumo)}</p>
+      ${itens}
+      <h3>Comparativo</h3>
+      <p>${esc(rel.comparativo)}</p>
+      ${rel.proximos_passos?.length ? `<h3>Próximos passos</h3>${lista(rel.proximos_passos, "passos")}` : ""}
+    </div>`;
   $("#relatorio").hidden = false;
-  $("#rel-print").addEventListener("click", () => window.print());
+  $("#relatorio").classList.remove("recolhido");
+  state.ranking = Object.fromEntries(rel.ranking.map((r, n) => [r.id, n + 1]));
+  if (state.mode === "mapa") renderMap(visibleItems());  // numera os escolhidos no mapa
 }
+
+// Recolher/expandir, imprimir e "ver no mapa" (o relatório longo empurrava o mapa para baixo)
+$("#relatorio").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.id === "rel-print") return window.print();
+  if (b.id === "rel-toggle") {
+    const recolhido = $("#relatorio").classList.toggle("recolhido");
+    b.textContent = recolhido ? "Expandir" : "Recolher";
+    return;
+  }
+  if (b.dataset.verMapa) {
+    if (state.mode !== "mapa") document.querySelector('[data-mode="mapa"]').click();
+    setTimeout(() => {
+      $("#map").scrollIntoView({ behavior: "smooth", block: "center" });
+      state.markers[b.dataset.verMapa.replace(":", "-")]?.openPopup();
+    }, 120);
+  }
+});
 
 async function carregarRelatorio(historicoId) {
   try {
@@ -509,7 +538,10 @@ function renderMap(items) {
   for (const i of items) {
     if (i.latitude == null) continue;
     pts.push([i.latitude, i.longitude]);
-    const m = L.marker([i.latitude, i.longitude]).addTo(map).bindPopup(`
+    const pos = state.ranking[`${i.fonte}:${i.id}`];
+    const icone = pos ? { icon: L.divIcon({ className: "pin-rank", html: `<span>${pos}</span>`, iconSize: [28, 28], iconAnchor: [14, 14] }), zIndexOffset: 1000 - pos } : {};
+    const m = L.marker([i.latitude, i.longitude], icone).addTo(map).bindPopup(`
+      ${pos ? `<b>${pos}º no relatório da IA</b><br>` : ""}
       <strong>${brl(i.total_mensal ?? i.aluguel)}</strong> /mês<br>
       ${esc(ROTULO_TIPO[i.tipo] || i.tipo)} · ${i.quartos ?? "?"} qts · ${i.vagas ?? "?"} vg<br>
       ${esc(i.endereco || i.bairro || "")}<br>

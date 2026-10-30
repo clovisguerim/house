@@ -113,7 +113,7 @@ label.inline input[type=number] { width: 80px; }
 
 /* Topbar */
 .topbar {
-  position: sticky; top: 0; z-index: 1000;
+  position: sticky; top: 0; z-index: 1100;  /* acima dos controles do Leaflet (1000) */
   display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
   padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
 }
@@ -284,3 +284,14 @@ ul.ask li::marker { content: "? "; color: var(--primary); }
   #map { height: 420px; }
   #hist-filter { min-width: 0; width: 100%; }
 }
+
+/* Relatório recolhível e marcadores numerados no mapa */
+.rel-acoes { display: flex; gap: 6px; flex-shrink: 0; }
+.relatorio.recolhido .rel-conteudo { display: none; }
+.rel-corpo h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pin-rank span {
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: #5b3cc4; color: #fff; font: 700 13px/1 system-ui, sans-serif;
+  border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+}
+@media print { .rel-acoes, [data-ver-mapa] { display: none !important; } }

@@ -136,6 +136,10 @@ candidatos e devolve:
   ao anunciante** (sobre o que o anúncio não informa);
 - **Comparativo** e **próximos passos** (qual visitar primeiro, o que confirmar).
 
+No mapa, os imóveis do relatório aparecem como **marcadores roxos numerados** (1, 2, 3…), e o botão
+**📍 Ver no mapa** de cada item leva até ele. Use **Recolher** para encolher o relatório e voltar a ver
+o mapa e os cards logo abaixo.
+
 A IA só usa os dados dos anúncios — confirme tudo com o anunciante. O relatório fica salvo junto da
 busca e o botão **Imprimir / PDF** gera uma página limpa (no diálogo, escolha **Salvar como PDF**;
 marque "Gráficos de plano de fundo" para sair com cores).
