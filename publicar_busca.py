@@ -21,6 +21,18 @@ from pathlib import Path
 PASTA = Path(__file__).resolve().parent
 
 
+def carregar_chaves_ia() -> None:
+    """Lê OPENAI_API_KEY / ANTHROPIC_API_KEY do .env.local (se não estiverem no ambiente), para não
+    precisar digitar a chave na linha de comando, onde ela ficaria no histórico do shell."""
+    env = PASTA / ".env.local"
+    if not env.exists():
+        return
+    for linha in env.read_text(encoding="utf-8").splitlines():
+        nome, _, valor = linha.partition("=")
+        if nome.strip() in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY") and valor.strip() and not os.getenv(nome.strip()):
+            os.environ[nome.strip()] = valor.strip().strip('"').strip("'")
+
+
 def url_do_site() -> str:
     if url := os.getenv("HOUSE_DESTINO_DATABASE_URL"):
         return url
@@ -47,6 +59,7 @@ async def main():
 
     # A busca roda com o banco/cache locais (padrão do app); o destino é um engine separado
     os.chdir(PASTA)
+    carregar_chaves_ia()  # antes de importar o app, que decide a IA pelas variáveis de ambiente
     from sqlalchemy import create_engine
     from sqlalchemy.orm import Session
 
