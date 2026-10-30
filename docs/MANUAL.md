@@ -10,8 +10,8 @@ lê os anúncios e escreve um relatório com os melhores.
 1. [Acesso e conta](#1-acesso-e-conta)
 2. [Fazendo uma busca](#2-fazendo-uma-busca)
 3. [Entendendo os resultados](#3-entendendo-os-resultados)
-4. [Relatório da IA](#4-relatório-da-ia)
-5. [Histórico](#5-histórico)
+4. [Relatório da IA](#4-relatório-da-ia) e [avaliação → regras da IA](#avaliar-o-relatório-e-as-regras-da-ia)
+5. [Histórico e comparação ao refazer](#5-histórico)
 6. [Administração (admins)](#6-administração-admins)
 7. [Rodar no PC, publicar no site e gerar PDF](#7-rodar-no-pc-publicar-no-site-e-gerar-pdf)
 8. [Dúvidas comuns](#8-dúvidas-comuns)
@@ -146,6 +146,26 @@ marque "Gráficos de plano de fundo" para sair com cores).
 
 > Precisa da IA ligada. Sem chave de API, o botão avisa "IA desligada".
 
+### Avaliar o relatório e as regras da IA
+
+Cada imóvel do relatório tem o botão **⭐ Avaliar** (e o topo tem **⭐ Avaliar relatório**, para o
+relatório todo). Dê uma nota de 1 a 5 e escreva o porquê — por exemplo, *"isso é casa geminada, não é
+o que procuro"*. Com **transformar em regra** marcado, a IA resume a avaliação numa **regra geral**
+(ex.: *"Não trate casa geminada como casa independente"*) que passa a valer **em todas as próximas
+buscas e relatórios**: ela orienta a interpretação do pedido e o ranking.
+
+- **compartilhar a regra com todos** (padrão): vale para todos os usuários. Desmarcado: só para você.
+- Sem IA ligada, a regra fica com o texto da sua justificativa.
+
+Na aba **Regras da IA** você vê as regras compartilhadas e as suas privadas e pode:
+
+- **Adicionar** uma regra escrita à mão;
+- **Editar** o texto, **ativar/desativar** e **compartilhar ou não** (as suas; admins podem em todas);
+- **Excluir**.
+
+Quando a busca ou o relatório usam regras, aparece **🧠 seguindo N regras**. Se uma regra contradisser
+o que o pedido diz explicitamente, vale o pedido.
+
 ---
 
 ## 5. Histórico
@@ -155,7 +175,12 @@ marque "Gráficos de plano de fundo" para sair com cores).
 Toda busca fica salva com quem pesquisou, quando, o texto, os filtros e os resultados.
 
 - **Abrir**: mostra os resultados salvos (sem buscar de novo) e o relatório, se houver (📝).
-- **Refazer**: roda a mesma busca de novo, com dados atuais.
+- **Refazer**: roda a mesma busca de novo, com dados atuais, e **compara com a busca de origem**:
+  - **🆕 Novo** nos cards que não estavam antes (e a opção *mostrar só os novos*);
+  - **"era R$ …"** quando o total mensal mudou (verde se caiu, vermelho se subiu);
+  - **Ver os que saíram**: anúncios que não vieram desta vez, com a verificação de cada um —
+    **fora do ar** (o portal removeu ou diz que não está mais disponível), **ainda no ar** (só saiu dos
+    filtros ou da amostra desta busca) ou **não verificado** (o portal bloqueou a verificação).
 - **Excluir**: apaga do histórico.
 - Admins podem alternar **Minhas / Todos os usuários** e filtrar por texto ou usuário.
 

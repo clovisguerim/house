@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>House · Aluguel em BH</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/static/styles.css?v=5">
+  <link rel="stylesheet" href="/static/styles.css?v=6">
 </head>
 <body>
 
@@ -58,6 +58,7 @@
     <nav class="nav">
       <button class="nav-btn active" data-view="buscar">Buscar</button>
       <button class="nav-btn" data-view="historico">Histórico</button>
+      <button class="nav-btn" data-view="regras">Regras da IA</button>
       <button class="nav-btn admin-only" data-view="usuarios">Usuários</button>
     </nav>
     <div class="who">
@@ -120,6 +121,7 @@
             <button class="btn ghost small" id="csv">Exportar CSV</button>
           </div>
         </div>
+        <section id="comparacao" class="comparacao" hidden></section>
         <div class="relatorio-bar">
           <span>📝 <strong>Relatório da IA</strong> com os</span>
           <input id="rel-top" type="number" min="1" max="40" value="10" aria-label="Quantidade de imóveis no relatório">
@@ -152,6 +154,29 @@
         </table>
       </div>
       <p id="hist-msg" class="msg"></p>
+    </section>
+
+    <!-- Regras da IA -->
+    <section id="view-regras" class="view" hidden>
+      <div class="results-head">
+        <div>
+          <h2>Regras da IA</h2>
+          <div class="muted">Preferências que a IA segue ao interpretar buscas e montar relatórios. Nascem das
+            avaliações dos relatórios ou podem ser escritas aqui. Compartilhadas valem para todos; privadas, só para você.</div>
+        </div>
+      </div>
+      <form id="nova-regra" class="nova-regra">
+        <input name="texto" placeholder="Ex.: Condomínio acima de R$ 500 deve pesar contra" minlength="3" maxlength="500" required>
+        <label class="inline"><input type="checkbox" name="compartilhada" checked> compartilhar com todos</label>
+        <button class="btn primary small" type="submit">Adicionar regra</button>
+      </form>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Regra</th><th>Autor</th><th>Origem</th><th>Compartilhada</th><th>Ativa</th><th></th></tr></thead>
+          <tbody id="regras-body"></tbody>
+        </table>
+      </div>
+      <p id="regras-msg" class="msg"></p>
     </section>
 
     <!-- Usuários (admin) -->
@@ -188,6 +213,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="/static/app.js?v=5"></script>
+<script src="/static/app.js?v=6"></script>
 </body>
 </html>

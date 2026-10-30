@@ -67,11 +67,13 @@ async def main():
     from app.config import normalizar_url_db
     from app.db import Base, engine as engine_local
     from app.models import SearchHistory, User
+    from app.routers.regras import regras_para
     from app.routers.search import executar_busca
     from app.schemas import SearchRequest
 
     Base.metadata.create_all(engine_local)  # cache local pode ainda não existir
     destino = None
+    regras: list[str] = []
     if not args.nao_publicar:
         destino = create_engine(normalizar_url_db(url_do_site()), pool_pre_ping=True)
         with Session(destino) as db:
@@ -79,11 +81,14 @@ async def main():
             if not user:
                 sys.exit(f"Usuário '{args.usuario}' não existe no site.")
             user_id = user.id
+            regras = regras_para(db, user)  # as mesmas regras da IA que valem no site para esse usuário
 
     print(f"Buscando: {args.texto}")
     print(f"IA: {'ligada (' + llm.provedor() + ')' if llm.ativa() else 'desligada (regras)'}")
+    if regras:
+        print(f"Regras da IA: {len(regras)} (do site)")
     resposta = await executar_busca(SearchRequest(texto=args.texto, fontes=args.fontes,
-                                                  max_detalhes=args.max_detalhes, usar_ia=not args.sem_ia))
+                                                  max_detalhes=args.max_detalhes, usar_ia=not args.sem_ia), regras)
     for st in resposta.fontes:
         print(f"  {st.fonte:<12} {'ok ' if st.ok else 'ERRO'} {st.encontrados:>4}  {st.mensagem or ''}")
     print(f"Total: {resposta.total} imóveis")
@@ -93,7 +98,7 @@ async def main():
         if not llm.ativa():
             print("Relatório pulado: IA desligada (defina OPENAI_API_KEY).")
         else:
-            relatorio = await llm.relatorio(resposta.texto, resposta.filtros, resposta.imoveis, args.relatorio)
+            relatorio = await llm.relatorio(resposta.texto, resposta.filtros, resposta.imoveis, args.relatorio, regras)
             relatorio.update(top=args.relatorio, gerado_em=datetime.utcnow().isoformat())
 
     if args.pdf:

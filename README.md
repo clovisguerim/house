@@ -65,11 +65,15 @@ O PC precisa estar ligado e conectado. `.\publicar-tailscale.ps1 -Parar` remove 
 | GET/PATCH | `/auth/me` | dados / alteração do próprio usuário |
 | GET/POST | `/admin/users` | listar / criar usuários (admin; `?is_admin=true` cria admin) |
 | GET/PATCH/DELETE | `/admin/users/{id}` | ver / editar (inclui `is_admin`, `is_active`, senha) / excluir |
-| POST | `/buscar` | busca: `{"texto": "...", "fontes": ["netimoveis","vivareal"], "max_detalhes": 120}` |
+| POST | `/buscar` | busca: `{"texto": "...", "fontes": [...], "max_detalhes": 120, "comparar_com": <id do histórico>}` |
 | GET | `/interpretar?texto=...` | mostra os filtros entendidos, sem buscar |
 | GET | `/historico` | buscas do usuário (quem, quando, texto, filtros, total) |
 | GET/DELETE | `/historico/{id}` | reabre os resultados salvos / exclui (dono ou admin) |
 | GET | `/admin/historico?usuario=` | buscas de todos os usuários (admin) |
+| POST/GET | `/historico/{id}/relatorio` | gera (top 1–40) / reabre o relatório da IA |
+| POST/GET | `/historico/{id}/feedback` | avalia o relatório (nota 1–5 + justificativa; vira regra) / lista avaliações |
+| GET/POST | `/regras` | regras da IA visíveis (compartilhadas + suas) / cria regra |
+| PATCH/DELETE | `/regras/{id}` | edita (texto, compartilhada, ativa) / exclui — autor ou admin |
 
 ## O que o texto entende
 

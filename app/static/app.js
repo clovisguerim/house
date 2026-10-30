@@ -202,6 +202,7 @@ function switchView(name) {
   $$(".view").forEach((v) => (v.hidden = v.id !== `view-${name}`));
   if (name === "historico") loadHistory();
   if (name === "usuarios") loadUsers();
+  if (name === "regras") loadRegras();
   // O Leaflet não mede um mapa escondido: ao voltar para Buscar, redesenha com a área já visível
   if (name === "buscar" && state.mode === "mapa" && state.result) setTimeout(() => renderMap(visibleItems()), 60);
 }
@@ -275,7 +276,10 @@ $("#search-form").addEventListener("submit", async (e) => {
   try {
     const fontes = [...$$("#fontes input:checked")].map((i) => i.value);
     if ($$("#fontes input").length && !fontes.length) throw new Error("Marque pelo menos uma fonte.");
-    const res = await api("/buscar", { method: "POST", json: { texto, fontes, max_detalhes: +$("#max-detalhes").value || 200 } });
+    // "Refazer" do histórico compara com a busca de origem (uma vez só)
+    const compararCom = state.compararCom;
+    state.compararCom = null;
+    const res = await api("/buscar", { method: "POST", json: { texto, fontes, max_detalhes: +$("#max-detalhes").value || 200, comparar_com: compararCom } });
     showResult(res);
   } catch (err) {
     $("#search-msg").textContent = err.message;
@@ -300,6 +304,9 @@ function showResult(res) {
   if (ia?.leitura) {
     const l = ia.leitura;
     iaChips.push(`<span class="source ia" title="${esc(`${l.novos} lidos agora, ${l.do_cache} do cache; ${l.sem_descricao} sem descrição; ${l.fora_do_limite} além do limite`)}">✨ IA leu ${l.anuncios_lidos} anúncios</span>`);
+    if (ia.regras_usadas) iaChips.push(`<span class="source ia" title="Preferências da aba Regras da IA">🧠 seguindo ${ia.regras_usadas} regra${ia.regras_usadas > 1 ? "s" : ""}</span>`);
+  } else if (ia?.ativa && ia.regras_usadas) {
+    iaChips.push(`<span class="source ia" title="Preferências da aba Regras da IA">🧠 seguindo ${ia.regras_usadas} regra${ia.regras_usadas > 1 ? "s" : ""}</span>`);
   } else if (ia && !ia.ativa) {
     iaChips.push(`<span class="source off" title="Defina OPENAI_API_KEY ou ANTHROPIC_API_KEY no servidor para ativar">IA desligada (sem chave da API)</span>`);
   }
@@ -309,6 +316,7 @@ function showResult(res) {
     .concat(iaChips)
     .join("");
   $("#interp").innerHTML = chipsFiltros(res.filtros);
+  renderComparacao(res.comparacao);
   $("#relatorio").hidden = true;
   $("#rel-msg").textContent = "";
   state.ranking = {};
@@ -328,7 +336,8 @@ function renderRelatorio(rel) {
         ${foto ? `<img class="rel-foto" src="${esc(safeUrl(foto))}" alt="" loading="eager" referrerpolicy="no-referrer">` : `<div class="rel-foto"></div>`}
         <div class="rel-corpo">
           <h3>${esc(r.titulo_curto)}
-            ${i.latitude != null ? `<button type="button" class="btn small ghost" data-ver-mapa="${esc(r.id)}">📍 Ver no mapa</button>` : ""}</h3>
+            ${i.latitude != null ? `<button type="button" class="btn small ghost" data-ver-mapa="${esc(r.id)}">📍 Ver no mapa</button>` : ""}
+            <button type="button" class="btn small ghost" data-avaliar="${esc(r.id)}">⭐ Avaliar</button></h3>
           <div class="rel-meta">
             <strong>${brl(i.total_mensal ?? i.aluguel)}</strong>/mês
             · ${esc(i.endereco || i.bairro || "")}
@@ -341,6 +350,7 @@ function renderRelatorio(rel) {
             <div><h4>Atenção</h4>${lista(r.pontos_de_atencao, "warn")}</div>
             <div><h4>Perguntar ao anunciante</h4>${lista(r.perguntas_para_o_anunciante, "ask")}</div>
           </div>
+          <div class="fb-slot" data-fb-slot="${esc(r.id)}"></div>
         </div>
       </article>`;
   }).join("");
@@ -348,14 +358,16 @@ function renderRelatorio(rel) {
     <div class="rel-head">
       <div>
         <h2>📝 Relatório: os ${rel.ranking.length} imóveis mais alinhados à sua busca</h2>
-        <div class="muted">Gerado por ${esc(rel.modelo)} em ${dataHora(rel.gerado_em)}, entre ${rel.candidatos_avaliados} candidatos.
+        <div class="muted">Gerado por ${esc(rel.modelo)} em ${dataHora(rel.gerado_em)}, entre ${rel.candidatos_avaliados} candidatos${rel.regras_usadas ? `, seguindo ${rel.regras_usadas} regra${rel.regras_usadas > 1 ? "s" : ""} da IA` : ""}.
           A IA só usa os dados dos anúncios — confirme tudo com o anunciante.</div>
       </div>
       <div class="rel-acoes">
+        <button class="btn small" type="button" data-avaliar="">⭐ Avaliar relatório</button>
         <button class="btn small" id="rel-toggle" type="button">Recolher</button>
         <button class="btn small" id="rel-print" type="button">Imprimir / PDF</button>
       </div>
     </div>
+    <div class="fb-slot" data-fb-slot=""></div>
     <div class="rel-conteudo">
       <p class="rel-resumo">${esc(rel.resumo)}</p>
       ${itens}
@@ -367,6 +379,7 @@ function renderRelatorio(rel) {
   $("#relatorio").classList.remove("recolhido");
   state.ranking = Object.fromEntries(rel.ranking.map((r, n) => [r.id, n + 1]));
   if (state.mode === "mapa") renderMap(visibleItems());  // numera os escolhidos no mapa
+  marcarAvaliados();
 }
 
 // Imprime só depois que as fotos carregaram (até 8 s), com o relatório expandido
@@ -391,6 +404,15 @@ $("#relatorio").addEventListener("click", (e) => {
   if (b.id === "rel-toggle") {
     const recolhido = $("#relatorio").classList.toggle("recolhido");
     b.textContent = recolhido ? "Expandir" : "Recolher";
+    return;
+  }
+  if ("avaliar" in b.dataset) {
+    const slot = slotAvaliacao(b.dataset.avaliar);
+    if (slot) slot.innerHTML = formAvaliacao(b.dataset.avaliar);
+    return;
+  }
+  if ("cancelar" in b.dataset) {
+    b.closest(".fb-form")?.remove();
     return;
   }
   if (b.dataset.verMapa) {
@@ -429,6 +451,7 @@ $("#rel-btn").addEventListener("click", async () => {
 
 function visibleItems() {
   let items = [...state.result.imoveis];
+  if (state.soNovos) items = items.filter((i) => i.novo);
   if ($("#f-pet").checked) items = items.filter((i) => i.aceita_pet === true);
   if ($("#f-vaga").checked) items = items.filter((i) => i.vagas > 0);
   const by = $("#sort").value;
@@ -463,11 +486,13 @@ function card(i) {
       <div class="card-img">
         ${foto ? `<img src="${esc(safeUrl(foto))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ""}
         <span class="tipo">${esc(ROTULO_TIPO[i.tipo] || i.tipo || "imóvel")}</span>
+        ${i.novo ? `<span class="novo">🆕 Novo</span>` : ""}
         ${i.distancia_km != null ? `<span class="dist">${i.distancia_km.toLocaleString("pt-BR")} km</span>` : ""}
       </div>
       <div class="card-body">
         <div>
-          <div class="price">${brl(i.total_mensal ?? i.aluguel)} <small>/mês total</small></div>
+          <div class="price">${brl(i.total_mensal ?? i.aluguel)} <small>/mês total</small>
+            ${i.preco_anterior != null ? `<span class="era ${i.preco_anterior > (i.total_mensal ?? 0) ? "caiu" : "subiu"}">era ${brl(i.preco_anterior)}</span>` : ""}</div>
           <div class="breakdown">
             <span>Aluguel ${brl(i.aluguel)}</span>
             <span>Cond. ${brl(i.condominio)}</span>
@@ -639,6 +664,7 @@ $("#hist-body").addEventListener("click", async (e) => {
       carregarRelatorio(b.dataset.open);
     } else if (b.dataset.rerun) {
       const h = state.history.find((x) => String(x.id) === b.dataset.rerun);
+      state.compararCom = h.tem_resultados ? h.id : null;
       switchView("buscar");
       $("#q").value = h.texto;
       $("#search-form").requestSubmit();
@@ -747,6 +773,187 @@ $("#diag-btn").addEventListener("click", async () => {
     $("#diag").innerHTML = `<span class="source off">${esc(err.message)}</span>`;
   } finally {
     btn.disabled = false;
+  }
+});
+
+// ---------- Comparação com a busca anterior (ao refazer) ----------
+const ROTULO_STATUS = {
+  fora_do_ar: ["off", "fora do ar"],
+  no_ar: ["", "ainda no ar"],
+  nao_verificado: ["nd", "não verificado"],
+};
+
+function renderComparacao(c) {
+  state.soNovos = false;
+  if (!c) {
+    $("#comparacao").hidden = true;
+    return;
+  }
+  const saidos = c.removidos.map((r) => {
+    const i = r.imovel;
+    const [cls, rotulo] = ROTULO_STATUS[r.status] || ["nd", r.status];
+    return `<li><span class="source ${cls}" title="${esc(r.detalhe)}">${rotulo}</span>
+      ${esc(ROTULO_TIPO[i.tipo] || i.tipo || "imóvel")} · ${esc(i.bairro || "")} · ${brl(i.total_mensal ?? i.aluguel)}
+      · <a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">anúncio ↗</a>
+      <span class="muted">(${esc(fonteNome(i.fonte))})</span></li>`;
+  }).join("");
+  $("#comparacao").innerHTML = `
+    <div class="cmp-head">
+      <span>🔄 Comparado com a busca de <b>${dataHora(c.data_anterior)}</b> (${c.total_anterior} imóveis):</span>
+      <span class="source ia">🆕 ${c.novos} novo${c.novos === 1 ? "" : "s"}</span>
+      <span class="source off">${c.removidos.length} saíram${c.fora_do_ar ? ` · ${c.fora_do_ar} fora do ar` : ""}</span>
+      ${c.mudou_preco ? `<span class="source">${c.mudou_preco} mudaram de preço</span>` : ""}
+      ${c.novos ? `<label class="inline"><input type="checkbox" id="so-novos"> mostrar só os novos</label>` : ""}
+    </div>
+    ${c.removidos.length ? `<details><summary>Ver os ${c.removidos.length} que saíram desde a última busca</summary><ul class="saidos">${saidos}</ul></details>` : ""}`;
+  $("#comparacao").hidden = false;
+  $("#so-novos")?.addEventListener("change", (e) => {
+    state.soNovos = e.target.checked;
+    renderResults();
+  });
+}
+
+// ---------- Avaliação do relatório (feedback -> regras) ----------
+function formAvaliacao(imovelId) {
+  const estrelas = [1, 2, 3, 4, 5].map((n) => `<label class="inline"><input type="radio" name="nota" value="${n}" required> ${"★".repeat(n)}</label>`).join("");
+  return `
+    <form class="fb-form" data-imovel="${esc(imovelId)}">
+      <div class="estrelas">${estrelas}</div>
+      <textarea name="justificativa" rows="2" minlength="3" maxlength="1000" required
+        placeholder="Por que essa nota? Ex.: casa geminada não é o que procuro; condomínio alto deveria pesar contra"></textarea>
+      <div class="fb-opcoes">
+        <label class="inline"><input type="checkbox" name="gerar_regra" checked> transformar em regra para a IA</label>
+        <label class="inline"><input type="checkbox" name="compartilhar" checked> compartilhar a regra com todos</label>
+      </div>
+      <div class="row">
+        <button class="btn small primary" type="submit">Enviar avaliação</button>
+        <button class="btn small ghost" type="button" data-cancelar>Cancelar</button>
+        <span class="fb-msg muted"></span>
+      </div>
+    </form>`;
+}
+
+function slotAvaliacao(imovelId) {
+  return [...$$("[data-fb-slot]")].find((el) => el.dataset.fbSlot === imovelId);
+}
+
+function mostrarAvaliado(imovelId, nota, texto, regra) {
+  const slot = slotAvaliacao(imovelId);
+  if (!slot) return;
+  slot.innerHTML = `<div class="fb-ok">✓ Avaliado com ${"★".repeat(nota)} — ${esc(texto)}
+    ${regra ? `<br>🧠 Regra ${regra.compartilhada ? "compartilhada" : "privada"} criada: “${esc(regra.texto)}” <span class="muted">(edite em Regras da IA)</span>` : ""}</div>`;
+}
+
+async function marcarAvaliados() {
+  if (!state.result?.historico_id) return;
+  try {
+    const fbs = await api(`/historico/${state.result.historico_id}/feedback`);
+    for (const f of fbs) mostrarAvaliado(f.imovel_id || "", f.nota, f.justificativa, null);
+  } catch { /* sem avaliações */ }
+}
+
+$("#relatorio").addEventListener("submit", async (e) => {
+  const form = e.target.closest(".fb-form");
+  if (!form) return;
+  e.preventDefault();
+  const f = new FormData(form);
+  const imovelId = form.dataset.imovel;
+  const msg = form.querySelector(".fb-msg");
+  const corpo = {
+    imovel_id: imovelId || null,
+    nota: +f.get("nota"),
+    justificativa: f.get("justificativa"),
+    gerar_regra: f.get("gerar_regra") === "on",
+    compartilhar: f.get("compartilhar") === "on",
+  };
+  form.querySelector("button[type=submit]").disabled = true;
+  msg.textContent = corpo.gerar_regra ? "Salvando e gerando a regra…" : "Salvando…";
+  try {
+    const r = await api(`/historico/${state.result.historico_id}/feedback`, { method: "POST", json: corpo });
+    mostrarAvaliado(imovelId, corpo.nota, corpo.justificativa, r.regra);
+    if (r.aviso) slotAvaliacao(imovelId)?.insertAdjacentHTML("beforeend", `<div class="muted">${esc(r.aviso)}</div>`);
+  } catch (err) {
+    msg.textContent = err.message;
+    form.querySelector("button[type=submit]").disabled = false;
+  }
+});
+
+// ---------- Regras da IA ----------
+async function loadRegras() {
+  $("#regras-msg").textContent = "";
+  try {
+    state.regras = await api("/regras");
+    renderRegras();
+  } catch (err) {
+    $("#regras-msg").textContent = err.message;
+  }
+}
+
+function renderRegras() {
+  const pode = (r) => r.minha || state.me?.is_admin;
+  $("#regras-body").innerHTML = state.regras.length
+    ? state.regras.map((r) => `
+      <tr data-regra="${r.id}">
+        <td class="texto regra-texto">${esc(r.texto)}</td>
+        <td>${esc(r.autor)}${r.minha ? ` <span class="badge">você</span>` : ""}</td>
+        <td>${r.origem === "feedback" ? "avaliação" : "manual"}<div class="muted">${dataHora(r.updated_at)}</div></td>
+        <td><input type="checkbox" data-campo="compartilhada" ${r.compartilhada ? "checked" : ""} ${pode(r) ? "" : "disabled"}></td>
+        <td><input type="checkbox" data-campo="ativa" ${r.ativa ? "checked" : ""} ${pode(r) ? "" : "disabled"}></td>
+        <td class="actions">${pode(r) ? `<button class="btn small" data-editar="${r.id}">Editar</button>
+          <button class="btn small ghost danger" data-excluir="${r.id}">Excluir</button>` : ""}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="6" class="muted">Nenhuma regra ainda. Avalie um relatório da IA ou escreva uma regra acima.</td></tr>`;
+}
+
+$("#nova-regra").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  try {
+    await api("/regras", { method: "POST", json: { texto: f.get("texto"), compartilhada: f.get("compartilhada") === "on" } });
+    e.target.reset();
+    e.target.querySelector("[name=compartilhada]").checked = true;
+    loadRegras();
+  } catch (err) {
+    $("#regras-msg").textContent = err.message;
+  }
+});
+
+$("#regras-body").addEventListener("change", async (e) => {
+  const cb = e.target;
+  const id = cb.closest("tr")?.dataset.regra;
+  if (!cb.dataset.campo || !id) return;
+  try {
+    await api(`/regras/${id}`, { method: "PATCH", json: { [cb.dataset.campo]: cb.checked } });
+  } catch (err) {
+    cb.checked = !cb.checked;
+    $("#regras-msg").textContent = err.message;
+  }
+});
+
+$("#regras-body").addEventListener("click", async (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const tr = b.closest("tr");
+  const celula = tr.querySelector(".regra-texto");
+  try {
+    if (b.dataset.excluir) {
+      if (!confirm("Excluir esta regra? A IA deixa de segui-la.")) return;
+      await api(`/regras/${b.dataset.excluir}`, { method: "DELETE" });
+      loadRegras();
+    } else if (b.dataset.editar) {
+      const atual = state.regras.find((r) => String(r.id) === b.dataset.editar).texto;
+      celula.innerHTML = `<textarea rows="2" maxlength="500">${esc(atual)}</textarea>
+        <div class="row"><button class="btn small primary" data-salvar="${b.dataset.editar}">Salvar</button>
+        <button class="btn small ghost" data-cancelar-edicao>Cancelar</button></div>`;
+    } else if (b.dataset.salvar) {
+      const texto = celula.querySelector("textarea").value.trim();
+      await api(`/regras/${b.dataset.salvar}`, { method: "PATCH", json: { texto } });
+      loadRegras();
+    } else if ("cancelarEdicao" in b.dataset) {
+      renderRegras();
+    }
+  } catch (err) {
+    $("#regras-msg").textContent = err.message;
   }
 });
 

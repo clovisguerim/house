@@ -204,11 +204,22 @@ titulo_capitalizacao).
 (ex.: "quintal", "mobiliado", "perto do metrô", "varanda", "silencioso"). No máximo 6."""
 
 
-async def interpretar(texto: str) -> Filtros:
-    chave = _chave("interpretar", modelo_interpretar(), texto.strip().lower())
+def bloco_regras(regras: list[str]) -> str:
+    """Regras de preferência acrescentadas às instruções da IA (vazio se não houver)."""
+    if not regras:
+        return ""
+    itens = "\n".join(f"- {r}" for r in regras)
+    return ("\n\nREGRAS DE PREFERÊNCIA dos usuários (aprendidas com avaliações anteriores). Siga-as sempre que "
+            "se aplicarem ao pedido; se alguma contradisser o que o pedido diz explicitamente, vale o pedido:\n" + itens)
+
+
+async def interpretar(texto: str, regras: list[str] | None = None) -> Filtros:
+    regras = regras or []
+    chave = _chave("interpretar", modelo_interpretar(), texto.strip().lower(), *regras)
     dados = _cache_get(chave)
     if dados is None:
-        dados = await _json(modelo_interpretar(), _SYSTEM_INTERPRETAR, texto, _SCHEMA_FILTROS, 4000)
+        dados = await _json(modelo_interpretar(), _SYSTEM_INTERPRETAR + bloco_regras(regras), texto,
+                            _SCHEMA_FILTROS, 4000)
         _cache_set(chave, dados)
     if not dados.get("tipos"):
         dados["tipos"] = ["apartamento", "casa"]
@@ -416,7 +427,8 @@ def _codigo_valido(bruto: str, validos: dict) -> str | None:
     return f"c{m.group(1)}" if m and f"c{m.group(1)}" in validos else None
 
 
-async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: int) -> dict:
+async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: int,
+                    regras: list[str] | None = None) -> dict:
     """Ranking comentado dos `top` imóveis mais alinhados ao pedido. Os candidatos já vêm na ordem do app.
 
     1. Ranking em lotes (listas longas numa chamada só voltam incompletas). Lote que não acrescenta
@@ -440,7 +452,8 @@ async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: in
                   "candidatos": [_candidato(c, im) for c, im in restantes.items()]}
         if ranking:
             pedido["ja_escolhidos"] = [{"titulo_curto": r["titulo_curto"], "nota": r["nota"]} for r in ranking]
-        dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO, json.dumps(pedido, ensure_ascii=False),
+        dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO + bloco_regras(regras or []),
+                            json.dumps(pedido, ensure_ascii=False),
                             _SCHEMA_RELATORIO, 16000, esforco="medium")
         novos = 0
         for r in dados["ranking"]:
@@ -470,7 +483,7 @@ async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: in
                        **{k: v for k, v in _candidato(r["id"], codigos[r["id"]]).items() if k != "id"}}
                       for n, r in enumerate(ranking[:15], 1)]
     try:
-        textos = await _json(modelo_interpretar(), _SYSTEM_SINTESE,
+        textos = await _json(modelo_interpretar(), _SYSTEM_SINTESE + bloco_regras(regras or []),
                              json.dumps({"pedido": texto, "ranking": resumo_ranking, "total_no_ranking": len(ranking)},
                                         ensure_ascii=False), _SCHEMA_SINTESE, 8000, esforco="medium")
     except (ErroIA, ValueError):
@@ -503,4 +516,38 @@ async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: in
         im = codigos[r["id"]]
         r["id"] = f"{im.fonte}:{im.id}"
     return {**textos, "ranking": ranking, "modelo": modelo_interpretar(), "candidatos_avaliados": len(candidatos),
-            "comentados_pela_ia": sum(not r.get("sem_ia") for r in ranking)}
+            "comentados_pela_ia": sum(not r.get("sem_ia") for r in ranking), "regras_usadas": len(regras or [])}
+
+
+# --- 4. Transformar um feedback em regra --------------------------------------------------------
+
+_SCHEMA_REGRA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["regra"],
+    "properties": {"regra": {"type": "string"}},
+}
+
+_SYSTEM_REGRA = """Uma pessoa avaliou a análise que uma IA fez de imóveis para alugar em Belo Horizonte. \
+Transforme a avaliação numa REGRA DE PREFERÊNCIA curta (no máximo 200 caracteres), em português, \
+escrita como instrução para a IA em buscas futuras.
+
+- Generalize: nada de citar um anúncio, endereço ou id específico; descreva o critério (ex.: "Não trate \
+casa geminada como casa independente", "Condomínio acima de R$ 500 deve pesar contra", "Valorize mais 2 \
+vagas de garagem do que área maior").
+- Nota baixa costuma indicar um erro da IA a evitar; nota alta, um acerto a manter.
+- Se a avaliação não permitir uma regra geral, resuma a justificativa como orientação."""
+
+
+async def regra_de_feedback(pedido: str, nota: int, justificativa: str, imovel: dict | None,
+                            avaliacao_ia: dict | None) -> str:
+    """Texto da regra proposta a partir de um feedback (a pessoa pode editar depois)."""
+    contexto = {"pedido_da_busca": pedido, "nota_dada_1_a_5": nota, "justificativa": justificativa}
+    if imovel:
+        contexto["imovel_avaliado"] = {k: imovel.get(k) for k in ("tipo", "bairro", "distancia_km", "quartos",
+                                                                   "vagas", "total_mensal", "aceita_pet")}
+    if avaliacao_ia:
+        contexto["o_que_a_ia_disse"] = {k: avaliacao_ia.get(k) for k in ("nota", "titulo_curto", "por_que")}
+    dados = await _json(modelo_interpretar(), _SYSTEM_REGRA, json.dumps(contexto, ensure_ascii=False),
+                        _SCHEMA_REGRA, 2000)
+    return dados["regra"].strip()[:500]

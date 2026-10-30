@@ -42,6 +42,7 @@ class SearchRequest(BaseModel):
     fontes: list[str] | None = Field(default=None, description="Nomes de GET /fontes; vazio = todas")
     max_detalhes: int = Field(default=120, ge=1, le=400, description="Máximo de anúncios abertos para ler detalhes")
     usar_ia: bool = Field(default=True, description="Ler a descrição dos anúncios com IA (se configurada)")
+    comparar_com: int | None = Field(default=None, description="id de uma busca do histórico para mostrar novos/saídos")
 
 
 class Filtros(BaseModel):
@@ -96,6 +97,8 @@ class Imovel(BaseModel):
     destaques: list[str] = Field(default=[], description="Pontos fortes lidos pela IA na descrição")
     atende: list[str] = Field(default=[], description="Quais desejos da busca (filtros.caracteristicas) o anúncio atende")
     descricao: str | None = Field(default=None, exclude=True)
+    novo: bool = Field(default=False, description="Não estava na busca comparada")
+    preco_anterior: float | None = Field(default=None, description="Total mensal na busca comparada, se mudou")
 
 
 class FonteStatus(BaseModel):
@@ -116,6 +119,38 @@ class SearchResponse(BaseModel):
     data: datetime | None = None
     usuario: str | None = None
     ia: dict | None = Field(default=None, description="Uso de IA nesta busca: modelos, anúncios lidos, erros")
+    comparacao: dict | None = Field(default=None, description="Diferenças para a busca anterior (ao refazer)")
+
+
+class RegraIn(BaseModel):
+    texto: str = Field(min_length=3, max_length=500)
+    compartilhada: bool = True
+
+
+class RegraUpdate(BaseModel):
+    texto: str | None = Field(default=None, min_length=3, max_length=500)
+    compartilhada: bool | None = None
+    ativa: bool | None = None
+
+
+class RegraOut(BaseModel):
+    id: int
+    texto: str
+    compartilhada: bool
+    ativa: bool
+    origem: str
+    autor: str
+    minha: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class FeedbackIn(BaseModel):
+    imovel_id: str | None = Field(default=None, description="'fonte:id' do imóvel; vazio = relatório todo")
+    nota: int = Field(ge=1, le=5)
+    justificativa: str = Field(min_length=3, max_length=1000)
+    gerar_regra: bool = True
+    compartilhar: bool = True
 
 
 class HistoricoItem(BaseModel):

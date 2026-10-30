@@ -295,3 +295,32 @@ ul.ask li::marker { content: "? "; color: var(--primary); }
   border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
 }
 @media print { .rel-acoes, [data-ver-mapa] { display: none !important; } }
+
+/* Comparação com a busca anterior */
+.comparacao {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.cmp-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.comparacao details { margin-top: 8px; }
+.comparacao summary { cursor: pointer; color: var(--primary); }
+.saidos { margin: 8px 0 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.source.nd { background: var(--unk-bg); color: var(--unk); }
+.card-img .novo {
+  position: absolute; bottom: 10px; left: 10px; background: #5b3cc4; color: #fff;
+  font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+}
+.era { font-size: 12px; font-weight: 600; margin-left: 6px; padding: 1px 6px; border-radius: 6px; }
+.era.caiu { background: var(--yes-bg); color: var(--yes); }
+.era.subiu { background: var(--no-bg); color: var(--no); }
+
+/* Avaliação do relatório e regras da IA */
+.fb-form { margin-top: 8px; padding: 10px; border: 1px dashed #c9bdf5; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+.fb-form textarea { font-size: 14px; }
+.estrelas, .fb-opcoes { display: flex; gap: 12px; flex-wrap: wrap; }
+.estrelas label { color: #c08a00; }
+.fb-ok { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--yes-bg); color: var(--yes); font-size: 13px; }
+.nova-regra { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.nova-regra input[name=texto] { flex: 1; min-width: 260px; }
+.regra-texto textarea { width: 100%; }
+@media print { [data-avaliar], .fb-form, .comparacao { display: none !important; } }

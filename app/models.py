@@ -35,6 +35,36 @@ class SearchHistory(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class Regra(Base):
+    """Preferência aprendida (de um feedback) ou escrita à mão, usada pela IA em buscas e relatórios.
+
+    Compartilhada = vale para todos os usuários; senão só para o autor."""
+    __tablename__ = "regras"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    texto: Mapped[str] = mapped_column(Text)
+    compartilhada: Mapped[bool] = mapped_column(Boolean, default=True)
+    ativa: Mapped[bool] = mapped_column(Boolean, default=True)
+    origem: Mapped[str] = mapped_column(String(16), default="manual")  # "manual" ou "feedback"
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Feedback(Base):
+    """Avaliação do usuário sobre o relatório da IA (inteiro ou um imóvel dele)."""
+    __tablename__ = "feedbacks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    historico_id: Mapped[int] = mapped_column(ForeignKey("search_history.id", ondelete="CASCADE"), index=True)
+    imovel_id: Mapped[str | None] = mapped_column(String(128), nullable=True)  # "fonte:id"; vazio = relatório todo
+    nota: Mapped[int] = mapped_column(Integer)  # 1 a 5
+    justificativa: Mapped[str] = mapped_column(Text)
+    regra_id: Mapped[int | None] = mapped_column(ForeignKey("regras.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class HttpCache(Base):
     __tablename__ = "http_cache"
 

@@ -1,9 +1,11 @@
 import asyncio
 import json
 import math
+import re
 import time
 from datetime import datetime
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -13,7 +15,7 @@ from ..models import SearchHistory, User
 from ..parser import desejos_atendidos, parse_query
 from ..providers.base import FetchError, Fetcher
 from .. import llm
-from ..config import BUSCAS_POR_HORA
+from ..config import BUSCAS_POR_HORA, USER_AGENT
 from ..geo import haversine_km
 from ..providers.casamineira import CasaMineiraProvider
 from ..providers.chavesnamao import ChavesNaMaoProvider
@@ -23,6 +25,7 @@ from ..providers.quintoandar import QuintoAndarProvider
 from ..providers.vivareal import VivaRealProvider
 from ..schemas import Filtros, FonteStatus, HistoricoItem, Imovel, SearchRequest, SearchResponse
 from ..security import get_current_user, require_admin
+from .regras import regras_para
 
 router = APIRouter(tags=["busca"])
 
@@ -95,11 +98,12 @@ def _ordem(im: Imovel, f: Filtros):
     return (-confirma, im.distancia_km if im.distancia_km is not None else 999, im.total_mensal or 1e9)
 
 
-async def _interpretar(texto: str) -> tuple[Filtros, str | None]:
-    """IA quando disponível; regras como reserva. Devolve também o erro da IA, se houve."""
+async def _interpretar(texto: str, regras: list[str]) -> tuple[Filtros, str | None]:
+    """IA quando disponível (seguindo as regras de preferência); regras fixas do parser como reserva.
+    Devolve também o erro da IA, se houve."""
     if llm.ativa():
         try:
-            return await llm.interpretar(texto), None
+            return await llm.interpretar(texto, regras), None
         except (llm.ErroIA, ValueError) as e:  # ValueError: JSON/validação
             return parse_query(texto), f"interpretação por IA falhou ({e}); usadas as regras"
     return parse_query(texto), None
@@ -136,8 +140,80 @@ async def buscar(req: SearchRequest, user: User = Depends(get_current_user), db:
 
 
 async def _buscar(req: SearchRequest, user: User, db: Session) -> SearchResponse:
-    resposta = await executar_busca(req)
+    anterior = None
+    if req.comparar_com:
+        row = db.get(SearchHistory, req.comparar_com)
+        if row and row.results_json and (row.user_id == user.id or user.is_admin):
+            anterior = (row.id, row.created_at, SearchResponse.model_validate_json(row.results_json))
+    resposta = await executar_busca(req, regras_para(db, user), anterior)
     return salvar_busca(db, user, resposta)
+
+
+# Texto de página de anúncio que já não está disponível
+_FORA_DO_AR = re.compile(r"n[aã]o est[aá] mais dispon[ií]vel|indispon[ií]vel|j[aá] foi alugado|an[uú]ncio "
+                         r"(removido|encerrado|expirado|desativado)|im[oó]vel n[aã]o encontrado|p[aá]gina n[aã]o encontrada",
+                         re.IGNORECASE)
+
+
+async def _status_anuncio(cliente: httpx.AsyncClient, im: Imovel) -> tuple[str, str]:
+    """Se um anúncio que sumiu da busca ainda está no ar. Não segue redirecionamentos: um anúncio
+    removido costuma redirecionar para a listagem ou para uma página de "indisponível"."""
+    try:
+        r = await cliente.get(im.url)
+    except httpx.HTTPError:
+        return "nao_verificado", "sem resposta do portal"
+    if r.status_code in (404, 410):
+        return "fora_do_ar", f"o portal respondeu {r.status_code}"
+    if r.status_code in (403, 429):
+        return "nao_verificado", "o portal bloqueou a verificação"
+    if 300 <= r.status_code < 400:
+        destino = r.headers.get("location", "")
+        if im.id not in destino or "indisponivel" in destino:
+            return "fora_do_ar", "o anúncio redireciona para outra página"
+        return "no_ar", "anúncio ainda publicado"
+    if r.status_code == 200:
+        if _FORA_DO_AR.search(r.text[:200000]):
+            return "fora_do_ar", "a página diz que o imóvel não está mais disponível"
+        return "no_ar", "anúncio ainda publicado (saiu dos filtros ou da amostra desta busca)"
+    return "nao_verificado", f"o portal respondeu {r.status_code}"
+
+
+async def _comparar(anterior: tuple, imoveis: list[Imovel]) -> dict:
+    """Marca novos e mudanças de preço em `imoveis` e lista o que saiu desde a busca anterior,
+    verificando (até 40) se o anúncio saiu do ar."""
+    historico_id, data, busca = anterior
+    chave = lambda im: f"{im.fonte}:{im.id}"
+    antigos = {chave(im): im for im in busca.imoveis}
+    atuais = {chave(im) for im in imoveis}
+    # O mesmo imóvel pode ter vindo agora por outro portal (fica em outras_fontes): compara pela URL
+    urls_atuais = {im.url for im in imoveis} | {o["url"] for im in imoveis for o in im.outras_fontes}
+    novos = mudou = 0
+    for im in imoveis:
+        velho = antigos.get(chave(im))
+        if velho is None:
+            im.novo = True
+            novos += 1
+        elif velho.total_mensal and im.total_mensal and abs(velho.total_mensal - im.total_mensal) >= 1:
+            im.preco_anterior = velho.total_mensal
+            mudou += 1
+    saidos = [im for k, im in antigos.items() if k not in atuais and im.url not in urls_atuais]
+    sem = asyncio.Semaphore(4)
+
+    async def verificar(cliente, im):
+        async with sem:
+            return await _status_anuncio(cliente, im)
+
+    async with httpx.AsyncClient(timeout=20, follow_redirects=False, headers={"User-Agent": USER_AGENT}) as cliente:
+        status = await asyncio.gather(*(verificar(cliente, im) for im in saidos[:40]))
+    removidos = []
+    for n, im in enumerate(saidos):
+        st, detalhe = status[n] if n < len(status) else ("nao_verificado", "fora do limite de verificação")
+        removidos.append({"status": st, "detalhe": detalhe,
+                          "imovel": im.model_dump(include={"fonte", "id", "url", "tipo", "bairro", "endereco",
+                                                           "total_mensal", "aluguel", "quartos", "fotos"})})
+    return {"com_historico_id": historico_id, "data_anterior": data.isoformat(), "total_anterior": busca.total,
+            "novos": novos, "mudou_preco": mudou, "mantidos": len(imoveis) - novos, "removidos": removidos,
+            "fora_do_ar": sum(r["status"] == "fora_do_ar" for r in removidos)}
 
 
 def salvar_busca(db: Session, user: User, resposta: SearchResponse) -> SearchResponse:
@@ -152,10 +228,13 @@ def salvar_busca(db: Session, user: User, resposta: SearchResponse) -> SearchRes
     return resposta
 
 
-async def executar_busca(req: SearchRequest) -> SearchResponse:
+async def executar_busca(req: SearchRequest, regras: list[str] | None = None,
+                         anterior: tuple | None = None) -> SearchResponse:
     """Busca completa (interpretação, fontes, IA, filtros, ordenação), sem gravar nada.
+    `regras`: preferências que a IA segue; `anterior`: (id, data, SearchResponse) para comparar.
     Usada pela API e pelo comando `publicar_busca.py`."""
-    filtros, erro_ia = await _interpretar(req.texto)
+    regras = regras or []
+    filtros, erro_ia = await _interpretar(req.texto, regras)
     escolhidos = [PROVIDERS[f] for f in (req.fontes or PROVIDERS) if f in PROVIDERS]
     if not escolhidos:
         raise HTTPException(status_code=400, detail=f"Fontes válidas: {', '.join(PROVIDERS)}")
@@ -184,7 +263,8 @@ async def executar_busca(req: SearchRequest) -> SearchResponse:
         status.append(st)
 
     imoveis = _filtros_finais(_deduplicar(imoveis), filtros, so_dados=True)
-    ia = {"ativa": llm.ativa(), "interpretacao": filtros.interpretado_por, "erros": [erro_ia] if erro_ia else []}
+    ia = {"ativa": llm.ativa(), "interpretacao": filtros.interpretado_por, "erros": [erro_ia] if erro_ia else [],
+          "regras_usadas": len(regras) if llm.ativa() else 0}
     if llm.ativa() and req.usar_ia:
         leitura = await llm.enriquecer(imoveis, filtros)
         ia["erros"] += leitura.pop("erros")
@@ -197,9 +277,10 @@ async def executar_busca(req: SearchRequest) -> SearchResponse:
     imoveis = sorted(_filtros_finais(imoveis, filtros), key=lambda im: _ordem(im, filtros))
     for st in status:
         st.encontrados = sum(im.fonte == st.fonte for im in imoveis)
+    comparacao = await _comparar(anterior, imoveis) if anterior else None
 
     return SearchResponse(texto=req.texto, filtros=filtros, referencia=referencia, fontes=status,
-                          total=len(imoveis), imoveis=imoveis, ia=ia)
+                          total=len(imoveis), imoveis=imoveis, ia=ia, comparacao=comparacao)
 
 
 _PAGINAS_TESTE = {
@@ -315,7 +396,7 @@ async def gerar_relatorio(historico_id: int, req: RelatorioRequest, user: User =
     _checar_limite(user)
     _em_andamento.add(user.id)
     try:
-        rel = await llm.relatorio(row.query, busca.filtros, busca.imoveis, req.top)
+        rel = await llm.relatorio(row.query, busca.filtros, busca.imoveis, req.top, regras_para(db, user))
     except (llm.ErroIA, ValueError) as e:
         raise HTTPException(status_code=502, detail=f"Não foi possível gerar o relatório: {e}")
     finally:
