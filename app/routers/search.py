@@ -14,7 +14,7 @@ from ..db import get_db
 from ..models import SearchHistory, User
 from ..parser import desejos_atendidos, parse_query
 from ..providers.base import FetchError, Fetcher
-from .. import llm
+from .. import llm, onibus
 from ..config import BUSCAS_POR_HORA, USER_AGENT
 from ..geo import haversine_km
 from ..providers.casamineira import CasaMineiraProvider
@@ -109,6 +109,10 @@ async def _interpretar(texto: str, regras: list[str]) -> tuple[Filtros, str | No
     return parse_query(texto), None
 
 
+RAIO_ONIBUS_M = 500
+LINHAS_FACIL_ACESSO = 8  # linhas a até 500 m para contar como "fácil acesso / transporte"
+DESEJO_TRANSPORTE = "fácil acesso / transporte"
+
 _em_andamento: set[int] = set()
 _historico_uso: dict[int, list[float]] = {}
 
@@ -150,7 +154,8 @@ async def _buscar(req: SearchRequest, user: User, db: Session) -> SearchResponse
 
 
 # Texto de página de anúncio que já não está disponível
-_FORA_DO_AR = re.compile(r"n[aã]o est[aá] mais dispon[ií]vel|indispon[ií]vel|j[aá] foi alugado|an[uú]ncio "
+_FORA_DO_AR = re.compile(r"n[aã]o est[aá] mais dispon[ií]vel|(?:im[oó]vel|an[uú]ncio) (?:est[aá] )?indispon[ií]vel|"
+                         r"j[aá] foi alugado|an[uú]ncio "
                          r"(removido|encerrado|expirado|desativado)|im[oó]vel n[aã]o encontrado|p[aá]gina n[aã]o encontrada",
                          re.IGNORECASE)
 
@@ -274,6 +279,12 @@ async def executar_busca(req: SearchRequest, regras: list[str] | None = None,
     for im in imoveis:
         texto = " ".join([*im.caracteristicas, *im.destaques, im.descricao or ""])
         im.atende = list(dict.fromkeys(im.atende + desejos_atendidos(texto, filtros.caracteristicas)))
+        # Ônibus a até 500 m (GTFS da BHTRANS); muitas linhas por perto também conta como fácil acesso
+        if im.latitude is not None and im.longitude is not None:
+            im.onibus = onibus.linhas_proximas(im.latitude, im.longitude, RAIO_ONIBUS_M)
+            if (im.onibus and len(im.onibus["linhas"]) >= LINHAS_FACIL_ACESSO
+                    and DESEJO_TRANSPORTE in filtros.caracteristicas and DESEJO_TRANSPORTE not in im.atende):
+                im.atende.append(DESEJO_TRANSPORTE)
     imoveis = sorted(_filtros_finais(imoveis, filtros), key=lambda im: _ordem(im, filtros))
     for st in status:
         st.encontrados = sum(im.fonte == st.fonte for im in imoveis)
@@ -312,7 +323,7 @@ async def diagnostico(admin: User = Depends(require_admin)):
         fontes = await asyncio.gather(*(testar(n, u) for n, u in _PAGINAS_TESTE.items()))
     finally:
         await fetcher.aclose()
-    return {"fontes": fontes, "bairros_na_tabela": len(_BAIRROS), "ia_ativa": llm.ativa(),
+    return {"fontes": fontes, "bairros_na_tabela": len(_BAIRROS), "onibus": onibus.info(), "ia_ativa": llm.ativa(),
             "ia_provedor": llm.provedor(), "ia_modelo": llm.modelo_interpretar() if llm.ativa() else None}
 
 

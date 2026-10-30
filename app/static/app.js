@@ -38,6 +38,33 @@ const brl = (v) => (v == null ? "–" : v.toLocaleString("pt-BR", { style: "curr
 const dataHora = (s) => new Date(s.endsWith("Z") ? s : s + "Z").toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 const safeUrl = (u) => (/^https:\/\//.test(u || "") ? u : "#");
 
+// Linhas de ônibus (GTFS da BHTRANS) a até 500 m: resumo + lista que abre ao clicar
+function blocoOnibus(i) {
+  const o = i.onibus;
+  if (!o) return "";
+  if (!o.linhas.length) return `<div class="onibus muted">🚌 nenhuma linha municipal a até ${o.raio_m} m</div>`;
+  const itens = o.linhas.map((l) => `<li><b>${esc(l.numero)}</b> ${esc(l.nome)} <span class="muted">· ${l.distancia_m} m${l.sistema === "suplementar" ? " · suplementar" : ""}</span></li>`).join("");
+  return `<details class="onibus"><summary>🚌 <b>${o.linhas.length}</b> linha${o.linhas.length > 1 ? "s" : ""} de ônibus a até ${o.raio_m} m
+    <span class="muted">· ponto mais perto a ${o.ponto_mais_proximo_m} m</span></summary><ul>${itens}</ul></details>`;
+}
+
+// Google Street View (o "bonequinho") na coordenada do anúncio e Google Maps pelo endereço.
+// Links públicos do Google Maps (map_action=pano / search), sem chave de API.
+function linksMapa(i) {
+  const out = [];
+  if (i.latitude != null && i.longitude != null) {
+    // Sem rua no endereço, a coordenada costuma ser o centro do bairro: a vista é aproximada
+    const aprox = !/\b(rua|r\.|av\.?|avenida|alameda|al\.|travessa|pra[cç]a|rodovia|estrada|beco)\b/i.test(i.endereco || "");
+    const sv = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${i.latitude},${i.longitude}`;
+    out.push(`<a href="${esc(sv)}" target="_blank" rel="noopener noreferrer" title="${aprox ? "Localização aproximada (o anúncio não informa a rua)" : "Abre o Street View na localização do anúncio"}">🧍 Street View${aprox ? " (aprox.)" : ""}</a>`);
+  }
+  if (i.endereco) {
+    const q = encodeURIComponent(`${i.endereco}${/belo horizonte/i.test(i.endereco) ? "" : ", Belo Horizonte - MG"}`);
+    out.push(`<a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener noreferrer">🗺️ Google Maps</a>`);
+  }
+  return out.join(" · ");
+}
+
 // ---------- API ----------
 async function api(path, opts = {}) {
   const headers = { ...(opts.headers || {}) };
@@ -342,7 +369,9 @@ function renderRelatorio(rel) {
             <strong>${brl(i.total_mensal ?? i.aluguel)}</strong>/mês
             · ${esc(i.endereco || i.bairro || "")}
             ${i.distancia_km != null ? ` · ${i.distancia_km.toLocaleString("pt-BR")} km` : ""}
+            ${i.onibus ? ` · 🚌 ${i.onibus.linhas.length} linhas a ${i.onibus.raio_m} m` : ""}
             · <a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">ver anúncio ↗</a>
+            ${linksMapa(i) ? ` · ${linksMapa(i)}` : ""}
           </div>
           <p>${esc(r.por_que)}${r.sem_ia ? ` <span class="badge" title="A IA não comentou este; entrou pela ordem do app">sem comentário da IA</span>` : ""}</p>
           <div class="rel-cols">
@@ -501,6 +530,7 @@ function card(i) {
         </div>
         <div class="addr"><strong>${esc(i.bairro || "")}</strong>${esc(i.endereco || "")}</div>
         <div class="specs">${specs.map((s) => `<span>${esc(s)}</span>`).join("")}</div>
+        ${blocoOnibus(i)}
         <div class="flags">
           ${flag("Pet", i.aceita_pet)}
           ${flag("Seguro fiança", i.seguro_fianca)}
@@ -513,6 +543,8 @@ function card(i) {
         <div class="card-foot">
           <span class="muted">${esc(fonteNome(i.fonte))} · #${esc(i.id)}</span>
           <a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">Ver anúncio ↗</a>
+        </div>
+        <div class="card-mapa">${linksMapa(i)}
         </div>
         ${i.outras_fontes?.length ? `<div class="muted also">Também em: ${i.outras_fontes
           .map((o) => `<a href="${esc(safeUrl(o.url))}" target="_blank" rel="noopener noreferrer">${esc(fonteNome(o.fonte))}</a>`)
@@ -584,7 +616,9 @@ function renderMap(items) {
       <strong>${brl(i.total_mensal ?? i.aluguel)}</strong> /mês<br>
       ${esc(ROTULO_TIPO[i.tipo] || i.tipo)} · ${i.quartos ?? "?"} qts · ${i.vagas ?? "?"} vg<br>
       ${esc(i.endereco || i.bairro || "")}<br>
-      ${i.distancia_km != null ? `${i.distancia_km} km · ` : ""}<a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">ver anúncio</a>`);
+      ${i.distancia_km != null ? `${i.distancia_km} km · ` : ""}<a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">ver anúncio</a>
+      ${i.onibus ? `<br>🚌 ${i.onibus.linhas.length} linhas de ônibus a até ${i.onibus.raio_m} m` : ""}
+      <br>${linksMapa(i)}`);
     state.markers[`${i.fonte}-${i.id}`] = m;
   }
   setTimeout(() => {
@@ -767,6 +801,7 @@ $("#diag-btn").addEventListener("click", async () => {
     $("#diag").innerHTML = d.fontes
       .map((f) => `<span class="source ${f.ok ? "" : "off"}">${esc(fonteNome(f.fonte))}: ${f.ok ? "ok" : esc(f.status ? `bloqueado (HTTP ${f.status})` : f.erro)} · ${f.segundos}s</span>`)
       .concat([`<span class="source">${d.bairros_na_tabela} bairros na tabela</span>`,
+        d.onibus?.pontos ? `<span class="source" title="${esc(d.onibus.fonte || "")}">🚌 ${d.onibus.linhas} linhas · ${d.onibus.pontos} pontos (GTFS BHTRANS ${esc((d.onibus.feeds?.[0]?.validade?.[1] || "").slice(0, 4))})</span>` : `<span class="source off">sem dados de ônibus</span>`,
         `<span class="source ${d.ia_ativa ? "ia" : "off"}">IA ${d.ia_ativa ? `ligada (${esc(d.ia_provedor)} · ${esc(d.ia_modelo)})` : "desligada"}</span>`])
       .join("");
   } catch (err) {

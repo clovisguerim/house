@@ -114,6 +114,13 @@ Cada card mostra:
 - **✓ prioridades** atendidas (ex.: "perto de farmácia"), conferidas nas características do anúncio.
 - **Destaques** lidos pela IA (quando ligada).
 - **Ver anúncio ↗** abre o anúncio original. **Também em:** o mesmo imóvel em outro portal.
+- **🚌 N linhas de ônibus a até 500 m** (clique para ver a lista: número, nome e distância até o
+  ponto onde cada linha passa). Dados oficiais da BHTRANS (linhas **municipais**, convencional e
+  suplementar; as **metropolitanas** do DER-MG não têm dados públicos). Com 8 linhas ou mais por perto, o
+  imóvel atende à prioridade "fácil acesso / transporte".
+- **🧍 Street View** abre o Google Street View (o "bonequinho") na localização do anúncio e
+  **🗺️ Google Maps** abre o endereço. "(aprox.)" = o anúncio não informa a rua, então a vista é do
+  centro do bairro.
 
 ### Mapa
 

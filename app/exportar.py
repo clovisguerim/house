@@ -91,6 +91,24 @@ def _filtros(resp: SearchResponse) -> str:
     return "".join(f"<span><b>{escape(k)}:</b> {escape(str(v))}</span>" for k, v in c)
 
 
+def _onibus(im) -> str:
+    """Resumo das linhas de ônibus a até 500 m (números das 12 mais próximas)."""
+    o = im.onibus
+    if not o or not o.get("linhas"):
+        return ""
+    numeros = ", ".join(l["numero"] for l in o["linhas"][:12]) + ("…" if len(o["linhas"]) > 12 else "")
+    return (f'<div>🚌 {len(o["linhas"])} linhas de ônibus a até {o["raio_m"]} m '
+            f'(ponto mais perto a {o["ponto_mais_proximo_m"]} m): {escape(numeros)}</div>')
+
+
+def _street_view(im) -> str:
+    """Link do Google Street View na coordenada do anúncio (clicável no PDF)."""
+    if im.latitude is None or im.longitude is None:
+        return ""
+    url = f"https://www.google.com/maps/@?api=1&map_action=pano&viewpoint={im.latitude},{im.longitude}"
+    return f'<div><a href="{escape(url)}">🧍 Ver no Google Street View</a></div>'
+
+
 def _item(n: int, im, extra: str = "", thumbs: dict | None = None) -> str:
     url_foto = next((u for u in im.fotos if u.startswith("https://")), None)
     foto = (thumbs or {}).get(url_foto) if thumbs is not None else url_foto
@@ -113,9 +131,11 @@ def _item(n: int, im, extra: str = "", thumbs: dict | None = None) -> str:
         <div><span class="preco">{_brl(im.total_mensal or im.aluguel)}</span>/mês
           <span class="muted">(aluguel {_brl(im.aluguel)} · cond. {_brl(im.condominio)} · IPTU {_brl(im.iptu)})</span></div>
         <div>{escape(specs)}</div>
+        {_onibus(im)}
         <div class="flags">{_flag("Pet", im.aceita_pet)}{_flag("Seguro fiança", im.seguro_fianca)}{_flag("Fiador", im.fiador)}{_flag("Caução", im.caucao)}{prios}</div>
         {extra}
         <div><a href="{escape(im.url)}">{escape(im.url)}</a> <span class="muted">({escape(im.fonte)})</span></div>
+        {_street_view(im)}
       </div>
     </div>"""
 

@@ -394,6 +394,9 @@ def _candidato(codigo: str, im: Imovel) -> dict:
     d["id"] = codigo  # código curto (c1, c2...): o modelo erra menos ao copiar do que com o id do portal
     if im.caracteristicas:
         d["caracteristicas"] = im.caracteristicas[:15]
+    if im.onibus:
+        d["onibus_500m"] = {"linhas": len(im.onibus["linhas"]), "ponto_mais_proximo_m": im.onibus["ponto_mais_proximo_m"],
+                            "exemplos": [f"{l['numero']} {l['nome']}" for l in im.onibus["linhas"][:5]]}
     return d
 
 

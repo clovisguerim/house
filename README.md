@@ -161,3 +161,14 @@ roda a busca aqui e grava o resultado no Histórico do site (banco do `.env.loca
 
 Para usar IA aqui, defina `$env:OPENAI_API_KEY` antes. Opções: `--fontes`, `--max-detalhes`, `--sem-ia`,
 `--pdf output/arquivo.pdf` (PDF com fotos, via Edge/Chrome), `--pdf-top N`, `--nao-publicar`.
+
+## Ônibus perto do imóvel (GTFS BHTRANS)
+
+`app/data/onibus_bh.json` traz os pontos de ônibus de BH e as linhas de cada um, gerado do GTFS
+oficial da BHTRANS (convencional + suplementar; cópia MobilityData, validade 2023). As linhas
+metropolitanas (DER-MG) não têm GTFS público. Para atualizar com os arquivos mais novos da PBH
+(baixe no navegador em dados.pbh.gov.br):
+
+```powershell
+.venv\Scripts\python.exe atualizar_onibus.py C:\pasta\com\os\zips
+```

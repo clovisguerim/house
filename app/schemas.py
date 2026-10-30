@@ -97,6 +97,7 @@ class Imovel(BaseModel):
     destaques: list[str] = Field(default=[], description="Pontos fortes lidos pela IA na descrição")
     atende: list[str] = Field(default=[], description="Quais desejos da busca (filtros.caracteristicas) o anúncio atende")
     descricao: str | None = Field(default=None, exclude=True)
+    onibus: dict | None = Field(default=None, description="Linhas de ônibus (BHTRANS) a até 500 m: pontos, linhas, distância")
     novo: bool = Field(default=False, description="Não estava na busca comparada")
     preco_anterior: float | None = Field(default=None, description="Total mensal na busca comparada, se mudou")
 
