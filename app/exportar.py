@@ -154,7 +154,11 @@ def _relatorio(rel: dict, por_id: dict, thumbs: dict | None) -> str:
           <div><b>Perguntar</b>{lista(r['perguntas_para_o_anunciante'])}</div></div></div>"""
         itens.append(_item(n, im, extra, thumbs))
     passos = lista(rel.get("proximos_passos") or [])
+    prios = " · ".join(f"<b>{escape(p['criterio'])}</b> ({escape(p['peso'])})" for p in rel.get("prioridades") or [])
+    if rel.get("observacao"):
+        prios += (" · " if prios else "") + f"“{escape(rel['observacao'])}”"
     return f"""<h2>Relatório da IA — os {len(itens)} mais alinhados</h2>
+      {f'<p class="muted">Priorizando: {prios}</p>' if prios else ''}
       <p>{escape(rel['resumo'])}</p>{''.join(itens)}
       <h2>Comparativo</h2><p>{escape(rel['comparativo'])}</p>
       {f'<h2>Próximos passos</h2>{passos}' if passos else ''}"""

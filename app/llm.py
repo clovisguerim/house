@@ -430,15 +430,110 @@ def _codigo_valido(bruto: str, validos: dict) -> str | None:
     return f"c{m.group(1)}" if m and f"c{m.group(1)}" in validos else None
 
 
+# --- Prioridades escolhidas para o relatório -------------------------------------------------------
+
+PESOS = {"desejavel": 1, "importante": 2, "essencial": 3}
+ROTULO_PESO = {"desejavel": "desejável", "importante": "importante", "essencial": "essencial"}
+
+
+def _sim_nao(campo):
+    return lambda im, _: getattr(im, campo)
+
+
+def _ranking(chave, menor_melhor):
+    """Critério contínuo: posição do imóvel entre os candidatos, de 0 (pior) a 1 (melhor)."""
+    def f(im, ctx):
+        valores = ctx.setdefault(chave, sorted(v for v in (_valor(x, chave) for x in ctx["todos"]) if v is not None))
+        v = _valor(im, chave)
+        if v is None or len(valores) < 2:
+            return None
+        pos = sum(1 for x in valores if x < v) / (len(valores) - 1)
+        return 1 - pos if menor_melhor else pos
+    return f
+
+
+def _valor(im: Imovel, chave: str):
+    return {"total": im.total_mensal, "distancia": im.distancia_km, "condominio": im.condominio or 0 if im.aluguel else None,
+            "quartos": im.quartos, "area": im.area_m2}.get(chave)
+
+
+# critério -> (rótulo, função(imóvel, contexto) -> True/False/None ou 0..1)
+CRITERIOS = {
+    "preco": ("Total mensal mais baixo", _ranking("total", True)),
+    "distancia": ("Mais perto do bairro de referência", _ranking("distancia", True)),
+    "vaga": ("Ter vaga de garagem", lambda im, _: None if im.vagas is None else im.vagas > 0),
+    "pet": ("Aceitar pet", _sim_nao("aceita_pet")),
+    "caucao": ("Aceitar caução", _sim_nao("caucao")),
+    "fiador": ("Aceitar fiador", _sim_nao("fiador")),
+    "seguro_fianca": ("Aceitar seguro fiança", _sim_nao("seguro_fianca")),
+    "titulo_capitalizacao": ("Aceitar título de capitalização", _sim_nao("titulo_capitalizacao")),
+    "onibus": ("Muitas linhas de ônibus perto (8+ a 500 m)",
+               lambda im, _: None if not im.onibus else len(im.onibus["linhas"]) >= 8),
+    "quartos": ("Mais quartos", _ranking("quartos", False)),
+    "area": ("Área maior", _ranking("area", False)),
+    "condominio": ("Condomínio baixo", _ranking("condominio", True)),
+    "mobiliado": ("Ser mobiliado", _sim_nao("mobiliado")),
+    "desejos": ("Atender às prioridades escritas na busca",
+                lambda im, ctx: None if not ctx["desejos"] else len(im.atende) / len(ctx["desejos"])),
+}
+
+
+def _nota_prioridades(im: Imovel, prioridades: dict[str, str], ctx: dict) -> float:
+    """Pontuação do imóvel pelas prioridades: confirma = +peso; não informa = pouco; nega = -peso."""
+    total = 0.0
+    for criterio, peso in prioridades.items():
+        if criterio not in CRITERIOS or peso not in PESOS:
+            continue
+        v = CRITERIOS[criterio][1](im, ctx)
+        p = PESOS[peso]
+        if v is True:
+            total += p
+        elif v is False:
+            total -= p * (2 if peso == "essencial" else 1)
+        elif v is None:
+            total += p * 0.15  # não informado: um pouco melhor que negar, bem pior que confirmar
+        else:
+            total += p * float(v)
+    return total
+
+
+def priorizar(imoveis: list[Imovel], prioridades: dict[str, str], desejos: list[str]) -> list[Imovel]:
+    """Reordena pelos critérios escolhidos (estável: empate mantém a ordem do app)."""
+    prioridades = {c: p for c, p in prioridades.items() if c in CRITERIOS and p in PESOS}
+    if not prioridades:
+        return imoveis
+    ctx = {"todos": imoveis, "desejos": desejos}
+    notas = {id(im): _nota_prioridades(im, prioridades, ctx) for im in imoveis}
+    return sorted(imoveis, key=lambda im: -notas[id(im)])
+
+
+def _bloco_prioridades(prioridades: dict[str, str], observacao: str | None) -> str:
+    itens = [f"- {CRITERIOS[c][0]}: {ROTULO_PESO[p]}" for c, p in prioridades.items() if c in CRITERIOS and p in PESOS]
+    if not itens and not observacao:
+        return ""
+    texto = ("\n\nPRIORIDADES DA PESSOA PARA ESTE RELATÓRIO (pese o ranking por elas, nesta ordem de força: "
+             "essencial > importante > desejável). Essencial: quem confirma vem antes; quem não informa desce e "
+             "vira pergunta ao anunciante; quem nega fica por último. Cite nos pontos fortes/atenção quando o "
+             "imóvel atende ou não a uma prioridade.\n" + "\n".join(itens))
+    if observacao:
+        texto += f"\n- Outras prioridades, nas palavras da pessoa: {observacao}"
+    return texto
+
+
 async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: int,
-                    regras: list[str] | None = None) -> dict:
+                    regras: list[str] | None = None, prioridades: dict[str, str] | None = None,
+                    observacao: str | None = None) -> dict:
     """Ranking comentado dos `top` imóveis mais alinhados ao pedido. Os candidatos já vêm na ordem do app.
 
     1. Ranking em lotes (listas longas numa chamada só voltam incompletas). Lote que não acrescenta
        nada é repetido menor; o que ainda faltar é completado pela ordem do app, sem comentário da IA.
     2. Síntese (resumo, comparativo, próximos passos) escrita sobre o ranking final, por posição.
-    Códigos internos (c7) que escaparem nos textos viram "o Nº (título)"."""
-    candidatos = imoveis[:max(40, top + 20)]
+    Códigos internos (c7) que escaparem nos textos viram "o Nº (título)".
+    Com `prioridades`, os candidatos são escolhidos e enviados já reordenados por elas."""
+    prioridades = {c: p for c, p in (prioridades or {}).items() if c in CRITERIOS and p in PESOS}
+    observacao = (observacao or "").strip()[:300] or None
+    instrucoes = bloco_regras(regras or []) + _bloco_prioridades(prioridades, observacao)
+    candidatos = priorizar(imoveis, prioridades, filtros.caracteristicas)[:max(40, top + 20)]
     top = min(top, len(candidatos))
     codigos = {f"c{k}": im for k, im in enumerate(candidatos, 1)}
     filtros_json = filtros.model_dump(exclude_defaults=True, exclude={"interpretado_por"})
@@ -455,7 +550,7 @@ async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: in
                   "candidatos": [_candidato(c, im) for c, im in restantes.items()]}
         if ranking:
             pedido["ja_escolhidos"] = [{"titulo_curto": r["titulo_curto"], "nota": r["nota"]} for r in ranking]
-        dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO + bloco_regras(regras or []),
+        dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO + instrucoes,
                             json.dumps(pedido, ensure_ascii=False),
                             _SCHEMA_RELATORIO, 16000, esforco="medium")
         novos = 0
@@ -486,7 +581,7 @@ async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: in
                        **{k: v for k, v in _candidato(r["id"], codigos[r["id"]]).items() if k != "id"}}
                       for n, r in enumerate(ranking[:15], 1)]
     try:
-        textos = await _json(modelo_interpretar(), _SYSTEM_SINTESE + bloco_regras(regras or []),
+        textos = await _json(modelo_interpretar(), _SYSTEM_SINTESE + instrucoes,
                              json.dumps({"pedido": texto, "ranking": resumo_ranking, "total_no_ranking": len(ranking)},
                                         ensure_ascii=False), _SCHEMA_SINTESE, 8000, esforco="medium")
     except (ErroIA, ValueError):
@@ -519,7 +614,9 @@ async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: in
         im = codigos[r["id"]]
         r["id"] = f"{im.fonte}:{im.id}"
     return {**textos, "ranking": ranking, "modelo": modelo_interpretar(), "candidatos_avaliados": len(candidatos),
-            "comentados_pela_ia": sum(not r.get("sem_ia") for r in ranking), "regras_usadas": len(regras or [])}
+            "comentados_pela_ia": sum(not r.get("sem_ia") for r in ranking), "regras_usadas": len(regras or []),
+            "prioridades": [{"criterio": CRITERIOS[c][0], "peso": ROTULO_PESO[p]} for c, p in prioridades.items()],
+            "observacao": observacao}
 
 
 # --- 4. Transformar um feedback em regra --------------------------------------------------------

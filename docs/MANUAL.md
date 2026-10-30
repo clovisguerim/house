@@ -138,6 +138,18 @@ Abaixo do cabeçalho dos resultados fica a faixa roxa **📝 Relatório da IA co
 padrão 10) e clique em **Gerar relatório** (até ~1 minuto). A IA recebe seu pedido e os 40 melhores
 candidatos e devolve:
 
+**⚙️ Prioridades** (ao lado de *Gerar relatório*): escolha o que mais importa neste relatório —
+aceitar caução, fiador, seguro fiança, título de capitalização ou pet; ter vaga; total mensal ou
+condomínio baixo; mais perto do bairro; mais quartos; área maior; mobiliado; muitas linhas de ônibus
+perto; atender às prioridades escritas na busca — marcando **Desejável**, **Importante** ou
+**Essencial** (o resto fica *Indiferente*). Há também um campo livre *Outras prioridades*.
+
+- **Essencial**: quem confirma vem antes; quem não informa desce e vira pergunta ao anunciante; quem
+  nega fica por último.
+- As prioridades também escolhem **quais imóveis a IA analisa**: um imóvel que aceita caução entra na
+  análise mesmo que estivesse no fim da lista.
+- A escolha fica lembrada (aparece como chips abaixo do botão) e o relatório mostra *Priorizando: …*.
+
 - **Resumo** do que a busca achou;
 - **Ranking** com nota de 0 a 10, o motivo, pontos fortes, pontos de atenção e **perguntas para fazer
   ao anunciante** (sobre o que o anúncio não informa);

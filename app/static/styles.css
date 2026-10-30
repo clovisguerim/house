@@ -344,3 +344,16 @@ ul.ask li::marker { content: "? "; color: var(--primary); }
                border-radius: var(--radius); padding: 14px; }
 .onibus-form ol { margin: 0; padding-left: 18px; font-size: 13px; }
 .onibus-form label { max-width: 520px; }
+
+/* Prioridades do relatório */
+.rel-prioridades {
+  background: var(--surface); border: 1px solid #d9cffb; border-radius: var(--radius);
+  padding: 14px; margin: -8px 0 16px; display: flex; flex-direction: column; gap: 10px;
+}
+.prio-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 6px 18px; }
+.prio-item { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; color: var(--text); font-size: 14px; }
+.prio-item select { padding: 4px 6px; font-size: 13px; }
+#rel-prio-resumo { flex-basis: 100%; margin-top: 0; }
+.chip.prio-essencial { background: #5b3cc4; color: #fff; border-color: transparent; }
+.chip.prio-essencial b { color: #e4dcff; }
+.chip.prio-importante { background: #e4dcff; color: #3b2a85; border-color: transparent; }

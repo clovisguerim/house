@@ -123,6 +123,7 @@ async function enterApp() {
   $$(".admin-only").forEach((el) => (el.hidden = !state.me.is_admin));
   switchView("buscar");
   loadFontes();
+  resumoPrioridades();
 }
 
 // ---------- Fontes ----------
@@ -389,6 +390,7 @@ function renderRelatorio(rel) {
       <div>
         <h2>📝 Relatório: os ${rel.ranking.length} imóveis mais alinhados à sua busca</h2>
         <div class="muted">Gerado por ${esc(rel.modelo)} em ${dataHora(rel.gerado_em)}, entre ${rel.candidatos_avaliados} candidatos${rel.regras_usadas ? `, seguindo ${rel.regras_usadas} regra${rel.regras_usadas > 1 ? "s" : ""} da IA` : ""}.
+          ${rel.prioridades?.length || rel.observacao ? `<br>Priorizando: ${(rel.prioridades || []).map((p) => `<b>${esc(p.criterio)}</b> (${esc(p.peso)})`).join(" · ")}${rel.observacao ? `${rel.prioridades?.length ? " · " : ""}“${esc(rel.observacao)}”` : ""}` : ""}
           A IA só usa os dados dos anúncios — confirme tudo com o anunciante.</div>
       </div>
       <div class="rel-acoes">
@@ -468,7 +470,8 @@ $("#rel-btn").addEventListener("click", async () => {
   btn.disabled = true;
   $("#rel-msg").textContent = `A IA está analisando os candidatos… (${top > 15 ? "1–3 min" : "até 1 min"})`;
   try {
-    const rel = await api(`/historico/${state.result.historico_id}/relatorio`, { method: "POST", json: { top } });
+    const { prioridades, observacao } = lerPrioridades();
+    const rel = await api(`/historico/${state.result.historico_id}/relatorio`, { method: "POST", json: { top, prioridades, observacao } });
     $("#rel-msg").textContent = "";
     renderRelatorio(rel);
     $("#relatorio").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -810,6 +813,83 @@ $("#diag-btn").addEventListener("click", async () => {
   } finally {
     btn.disabled = false;
   }
+});
+
+// ---------- Prioridades do relatório ----------
+const PESOS_PRIO = [["", "Indiferente"], ["desejavel", "Desejável"], ["importante", "Importante"], ["essencial", "Essencial"]];
+
+function lerPrioridades() {
+  try {
+    const p = JSON.parse(localStorage.getItem("house_prioridades") || "{}");
+    return { prioridades: p.prioridades || {}, observacao: p.observacao || "" };
+  } catch {
+    return { prioridades: {}, observacao: "" };
+  }
+}
+
+function salvarPrioridades(p) {
+  try {
+    localStorage.setItem("house_prioridades", JSON.stringify(p));
+  } catch { /* storage indisponível */ }
+  resumoPrioridades();
+}
+
+async function carregarCriterios() {
+  if (!state.criterios) state.criterios = await api("/relatorio/criterios");
+  return state.criterios;
+}
+
+async function resumoPrioridades() {
+  const { prioridades, observacao } = lerPrioridades();
+  const chaves = Object.keys(prioridades);
+  if (!chaves.length && !observacao) return ($("#rel-prio-resumo").innerHTML = "");
+  let rotulos = {};
+  try {
+    rotulos = Object.fromEntries((await carregarCriterios()).map((c) => [c.chave, c.rotulo]));
+  } catch { /* sem rótulos: usa a chave */ }
+  const ordem = { essencial: 0, importante: 1, desejavel: 2 };
+  const nome = Object.fromEntries(PESOS_PRIO);
+  $("#rel-prio-resumo").innerHTML = chaves
+    .sort((a, b) => ordem[prioridades[a]] - ordem[prioridades[b]])
+    .map((c) => `<span class="chip prio-${prioridades[c]}"><b>${esc(nome[prioridades[c]])}</b>${esc(rotulos[c] || c)}</span>`)
+    .concat(observacao ? [`<span class="chip"><b>Outras</b>${esc(observacao)}</span>`] : [])
+    .join("");
+}
+
+async function abrirPrioridades() {
+  const painel = $("#rel-prioridades");
+  if (!painel.hidden) return (painel.hidden = true);
+  const { prioridades, observacao } = lerPrioridades();
+  try {
+    const criterios = await carregarCriterios();
+    $("#rel-prio-lista").innerHTML = criterios.map((c) => `
+      <label class="prio-item">
+        <span>${esc(c.rotulo)}</span>
+        <select data-criterio="${esc(c.chave)}">
+          ${PESOS_PRIO.map(([v, r]) => `<option value="${v}" ${(prioridades[c.chave] || "") === v ? "selected" : ""}>${r}</option>`).join("")}
+        </select>
+      </label>`).join("");
+  } catch (err) {
+    $("#rel-prio-lista").textContent = err.message;
+  }
+  $("#rel-observacao").value = observacao;
+  painel.hidden = false;
+}
+
+function lerPainel() {
+  const prioridades = {};
+  $$("#rel-prio-lista select").forEach((s) => { if (s.value) prioridades[s.dataset.criterio] = s.value; });
+  salvarPrioridades({ prioridades, observacao: $("#rel-observacao").value.trim() });
+}
+
+$("#rel-prio-btn").addEventListener("click", abrirPrioridades);
+$("#rel-prio-fechar").addEventListener("click", () => ($("#rel-prioridades").hidden = true));
+$("#rel-prio-lista").addEventListener("change", lerPainel);
+$("#rel-observacao").addEventListener("input", lerPainel);
+$("#rel-prio-limpar").addEventListener("click", () => {
+  $$("#rel-prio-lista select").forEach((s) => (s.value = ""));
+  $("#rel-observacao").value = "";
+  lerPainel();
 });
 
 // ---------- Base de ônibus (admin) ----------

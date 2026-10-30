@@ -4,6 +4,7 @@ import math
 import re
 import time
 from datetime import datetime
+from typing import Literal
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -381,6 +382,15 @@ def abrir_historico(historico_id: int, user: User = Depends(get_current_user), d
 
 class RelatorioRequest(BaseModel):
     top: int = Field(default=10, ge=1, le=40)
+    prioridades: dict[str, Literal["desejavel", "importante", "essencial"]] = Field(
+        default={}, description="critério (GET /relatorio/criterios) -> peso; ausente = indiferente")
+    observacao: str | None = Field(default=None, max_length=300, description="Outras prioridades, em texto livre")
+
+
+@router.get("/relatorio/criterios")
+def criterios_relatorio(user: User = Depends(get_current_user)):
+    """Critérios que podem ser priorizados ao gerar o relatório."""
+    return [{"chave": c, "rotulo": rotulo} for c, (rotulo, _) in llm.CRITERIOS.items()]
 
 
 def _resposta_relatorio(row: SearchHistory) -> dict:
@@ -407,7 +417,8 @@ async def gerar_relatorio(historico_id: int, req: RelatorioRequest, user: User =
     _checar_limite(user)
     _em_andamento.add(user.id)
     try:
-        rel = await llm.relatorio(row.query, busca.filtros, busca.imoveis, req.top, regras_para(db, user))
+        rel = await llm.relatorio(row.query, busca.filtros, busca.imoveis, req.top, regras_para(db, user),
+                                  req.prioridades, req.observacao)
     except (llm.ErroIA, ValueError) as e:
         raise HTTPException(status_code=502, detail=f"Não foi possível gerar o relatório: {e}")
     finally:
