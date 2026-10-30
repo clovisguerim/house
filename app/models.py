@@ -30,6 +30,8 @@ class SearchHistory(Base):
     total_results: Mapped[int] = mapped_column(Integer, default=0)
     # Resposta completa da busca (SearchResponse em JSON) para reabrir depois
     results_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Último relatório da IA sobre esta busca (JSON), para reabrir sem gerar de novo
+    relatorio_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

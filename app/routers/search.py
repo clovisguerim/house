@@ -2,8 +2,10 @@ import asyncio
 import json
 import math
 import time
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -231,7 +233,8 @@ def interpretar(texto: str, user: User = Depends(get_current_user)):
 
 def _resumo(r: SearchHistory, username: str) -> HistoricoItem:
     return HistoricoItem(id=r.id, usuario=username, texto=r.query, filtros=json.loads(r.filters_json),
-                         total=r.total_results, data=r.created_at, tem_resultados=r.results_json is not None)
+                         total=r.total_results, data=r.created_at, tem_resultados=r.results_json is not None,
+                         tem_relatorio=r.relatorio_json is not None)
 
 
 @router.get("/historico", response_model=list[HistoricoItem])
@@ -266,6 +269,54 @@ def abrir_historico(historico_id: int, user: User = Depends(get_current_user), d
     resposta = SearchResponse.model_validate_json(row.results_json)
     resposta.historico_id, resposta.data, resposta.usuario = row.id, row.created_at, dono.username if dono else None
     return resposta
+
+
+class RelatorioRequest(BaseModel):
+    top: int = Field(default=5, ge=1, le=15)
+
+
+def _resposta_relatorio(row: SearchHistory) -> dict:
+    """Relatório salvo + os imóveis citados, na ordem do ranking."""
+    rel = json.loads(row.relatorio_json)
+    busca = SearchResponse.model_validate_json(row.results_json)
+    por_id = {f"{im.fonte}:{im.id}": im for im in busca.imoveis}
+    rel["imoveis"] = [por_id[r["id"]].model_dump() for r in rel["ranking"] if r["id"] in por_id]
+    return rel
+
+
+@router.post("/historico/{historico_id}/relatorio")
+async def gerar_relatorio(historico_id: int, req: RelatorioRequest, user: User = Depends(get_current_user),
+                          db: Session = Depends(get_db)):
+    """A IA escolhe os `top` imóveis mais alinhados ao pedido e escreve um relatório comentado."""
+    row, _ = _do_usuario(historico_id, user, db)
+    if not llm.ativa():
+        raise HTTPException(status_code=400, detail="IA desligada: configure OPENAI_API_KEY ou ANTHROPIC_API_KEY no servidor")
+    if not row.results_json:
+        raise HTTPException(status_code=404, detail="Esta busca não tem resultados salvos")
+    busca = SearchResponse.model_validate_json(row.results_json)
+    if not busca.imoveis:
+        raise HTTPException(status_code=400, detail="A busca não encontrou imóveis para comparar")
+    _checar_limite(user)
+    _em_andamento.add(user.id)
+    try:
+        rel = await llm.relatorio(row.query, busca.filtros, busca.imoveis, req.top)
+    except (llm.ErroIA, ValueError) as e:
+        raise HTTPException(status_code=502, detail=f"Não foi possível gerar o relatório: {e}")
+    finally:
+        _em_andamento.discard(user.id)
+    rel["top"] = req.top
+    rel["gerado_em"] = datetime.utcnow().isoformat()
+    row.relatorio_json = json.dumps(rel, ensure_ascii=False)
+    db.commit()
+    return _resposta_relatorio(row)
+
+
+@router.get("/historico/{historico_id}/relatorio")
+def abrir_relatorio(historico_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    row, _ = _do_usuario(historico_id, user, db)
+    if not row.relatorio_json:
+        raise HTTPException(status_code=404, detail="Ainda não há relatório para esta busca")
+    return _resposta_relatorio(row)
 
 
 @router.delete("/historico/{historico_id}", status_code=204)

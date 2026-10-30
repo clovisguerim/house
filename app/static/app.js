@@ -299,8 +299,79 @@ function showResult(res) {
     .concat(iaChips)
     .join("");
   $("#interp").innerHTML = chipsFiltros(res.filtros);
+  $("#relatorio").hidden = true;
+  $("#rel-msg").textContent = "";
   renderResults();
 }
+
+// ---------- Relatório da IA ----------
+function renderRelatorio(rel) {
+  const porId = Object.fromEntries(rel.imoveis.map((i) => [`${i.fonte}:${i.id}`, i]));
+  const lista = (itens, cls) => (itens?.length ? `<ul class="${cls}">${itens.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "");
+  const itens = rel.ranking.map((r, n) => {
+    const i = porId[r.id] || {};
+    const foto = i.fotos?.[0];
+    return `
+      <article class="rel-item">
+        <div class="rel-pos">${n + 1}º<span class="rel-nota" title="Alinhamento com a busca">${r.nota}/10</span></div>
+        ${foto ? `<img class="rel-foto" src="${esc(safeUrl(foto))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<div class="rel-foto"></div>`}
+        <div class="rel-corpo">
+          <h3>${esc(r.titulo_curto)}</h3>
+          <div class="rel-meta">
+            <strong>${brl(i.total_mensal ?? i.aluguel)}</strong>/mês
+            · ${esc(i.endereco || i.bairro || "")}
+            ${i.distancia_km != null ? ` · ${i.distancia_km.toLocaleString("pt-BR")} km` : ""}
+            · <a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">ver anúncio ↗</a>
+          </div>
+          <p>${esc(r.por_que)}</p>
+          <div class="rel-cols">
+            <div><h4>Pontos fortes</h4>${lista(r.pontos_fortes, "ok")}</div>
+            <div><h4>Atenção</h4>${lista(r.pontos_de_atencao, "warn")}</div>
+            <div><h4>Perguntar ao anunciante</h4>${lista(r.perguntas_para_o_anunciante, "ask")}</div>
+          </div>
+        </div>
+      </article>`;
+  }).join("");
+  $("#relatorio").innerHTML = `
+    <div class="rel-head">
+      <div>
+        <h2>📝 Relatório: os ${rel.ranking.length} imóveis mais alinhados à sua busca</h2>
+        <div class="muted">Gerado por ${esc(rel.modelo)} em ${dataHora(rel.gerado_em)}, entre ${rel.candidatos_avaliados} candidatos.
+          A IA só usa os dados dos anúncios — confirme tudo com o anunciante.</div>
+      </div>
+      <button class="btn small" id="rel-print">Imprimir / PDF</button>
+    </div>
+    <p class="rel-resumo">${esc(rel.resumo)}</p>
+    ${itens}
+    <h3>Comparativo</h3>
+    <p>${esc(rel.comparativo)}</p>
+    ${rel.proximos_passos?.length ? `<h3>Próximos passos</h3>${lista(rel.proximos_passos, "passos")}` : ""}`;
+  $("#relatorio").hidden = false;
+  $("#rel-print").addEventListener("click", () => window.print());
+}
+
+async function carregarRelatorio(historicoId) {
+  try {
+    renderRelatorio(await api(`/historico/${historicoId}/relatorio`));
+  } catch { /* busca sem relatório ainda */ }
+}
+
+$("#rel-btn").addEventListener("click", async () => {
+  if (!state.result?.historico_id) return;
+  const btn = $("#rel-btn");
+  btn.disabled = true;
+  $("#rel-msg").textContent = "A IA está analisando os candidatos… (até 1 min)";
+  try {
+    const rel = await api(`/historico/${state.result.historico_id}/relatorio`, { method: "POST", json: { top: +$("#rel-top").value } });
+    $("#rel-msg").textContent = "";
+    renderRelatorio(rel);
+    $("#relatorio").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    $("#rel-msg").textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 function visibleItems() {
   let items = [...state.result.imoveis];
@@ -480,7 +551,7 @@ function renderHistory() {
         <td>${dataHora(h.data)}</td>
         <td>${esc(h.usuario)}</td>
         <td class="texto">${esc(h.texto)}<div class="chips">${chipsFiltros(h.filtros)}</div></td>
-        <td class="num">${h.total}</td>
+        <td class="num">${h.total}${h.tem_relatorio ? ` <span class="badge" title="Tem relatório da IA">📝</span>` : ""}</td>
         <td class="actions">
           <button class="btn small" data-open="${h.id}" ${h.tem_resultados ? "" : "disabled title='Busca antiga, sem resultados salvos'"}>Abrir</button>
           <button class="btn small" data-rerun="${h.id}">Refazer</button>
@@ -500,6 +571,7 @@ $("#hist-body").addEventListener("click", async (e) => {
       switchView("buscar");
       $("#q").value = res.texto;
       showResult(res);
+      carregarRelatorio(b.dataset.open);
     } else if (b.dataset.rerun) {
       const h = state.history.find((x) => String(x.id) === b.dataset.rerun);
       switchView("buscar");

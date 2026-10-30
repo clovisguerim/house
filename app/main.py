@@ -18,6 +18,7 @@ STATIC = Path(__file__).parent / "static"
 def migrate():
     """Colunas novas em bancos criados por versões anteriores (create_all não altera tabelas)."""
     novas = [("search_history", "results_json", "TEXT"),
+             ("search_history", "relatorio_json", "TEXT"),
              ("users", "must_change_password", "BOOLEAN NOT NULL DEFAULT FALSE")]
     for tabela, coluna, tipo in novas:
         if coluna not in {c["name"] for c in inspect(engine).get_columns(tabela)}:

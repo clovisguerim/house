@@ -225,6 +225,54 @@ main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 48px; }
 
 .new-user { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
 
+/* Relatório da IA */
+.relatorio-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px; margin-bottom: 16px; border-radius: var(--radius);
+  background: #efe9ff; color: #3b2a85;
+}
+.btn.ia-btn { background: #5b3cc4; border-color: #5b3cc4; color: #fff; }
+.relatorio {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+}
+.rel-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.rel-resumo { font-size: 16px; }
+.relatorio h3 { margin: 18px 0 6px; font-size: 16px; }
+.rel-item {
+  display: grid; grid-template-columns: 56px 160px 1fr; gap: 14px;
+  padding: 14px 0; border-top: 1px solid var(--border);
+}
+.rel-pos { font-size: 22px; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rel-nota { font-size: 12px; font-weight: 600; color: #5b3cc4; background: #efe9ff; border-radius: 999px; padding: 2px 8px; }
+.rel-foto { width: 160px; height: 110px; object-fit: cover; border-radius: 8px; background: var(--surface-2); }
+.rel-corpo h3 { margin: 0 0 4px; }
+.rel-corpo p { margin: 6px 0; }
+.rel-meta { font-size: 13px; color: var(--muted); }
+.rel-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 13px; }
+.rel-cols h4 { margin: 4px 0; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.rel-cols ul, .relatorio ul.passos { margin: 0; padding-left: 18px; }
+ul.ok li::marker { content: "✓ "; color: var(--yes); }
+ul.warn li::marker { content: "! "; color: var(--warn); }
+ul.ask li::marker { content: "? "; color: var(--primary); }
+@media (prefers-color-scheme: dark) {
+  .relatorio-bar { background: #2d2547; color: #d9ceff; }
+  .rel-nota { background: #2d2547; color: #c4b5fd; }
+}
+@media (max-width: 760px) {
+  .rel-item { grid-template-columns: 40px 1fr; }
+  .rel-foto { display: none; }
+  .rel-cols { grid-template-columns: 1fr; }
+}
+/* Imprimir / PDF: só o relatório */
+@media print {
+  body { background: #fff; }
+  .topbar, .search-box, .results-head, .relatorio-bar, #map, #cards, #loading, #search-msg, #rel-print { display: none !important; }
+  main { padding: 0; max-width: none; }
+  .relatorio { border: 0; box-shadow: none; padding: 0; }
+  .rel-item { break-inside: avoid; }
+}
+
 .leaflet-popup-content { font: 13px/1.4 system-ui, sans-serif; }
 .leaflet-popup-content strong { font-size: 14px; }
 

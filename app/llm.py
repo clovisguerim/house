@@ -81,17 +81,19 @@ def _cache_set(chave: str, valor: dict) -> None:
         db.commit()
 
 
-async def _json(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int) -> dict:
+async def _json(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int,
+                esforco: str = LLM_EFFORT) -> dict:
     """Uma chamada com saída estruturada; devolve o JSON já validado pelo schema."""
     if provedor() == "openai":
-        return await _json_openai(modelo, system, conteudo, schema, max_tokens)
-    return await _json_anthropic(modelo, system, conteudo, schema, max_tokens)
+        return await _json_openai(modelo, system, conteudo, schema, max_tokens, esforco)
+    return await _json_anthropic(modelo, system, conteudo, schema, max_tokens, esforco)
 
 
-async def _json_openai(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int) -> dict:
+async def _json_openai(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int,
+                       esforco: str) -> dict:
     extra = {}
     if modelo.startswith(("gpt-5", "o")):  # modelos com raciocínio aceitam o nível de esforço
-        extra["reasoning_effort"] = LLM_EFFORT
+        extra["reasoning_effort"] = esforco
     try:
         resp = await _cliente("openai").chat.completions.create(
             model=modelo,
@@ -119,7 +121,8 @@ async def _json_openai(modelo: str, system: str, conteudo: str, schema: dict, ma
     return json.loads(escolha.message.content)
 
 
-async def _json_anthropic(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int) -> dict:
+async def _json_anthropic(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int,
+                          esforco: str) -> dict:
     extra = {}
     if modelo in _COM_FALLBACK:
         extra = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
@@ -129,7 +132,7 @@ async def _json_anthropic(modelo: str, system: str, conteudo: str, schema: dict,
             max_tokens=max_tokens,
             system=system,
             messages=[{"role": "user", "content": conteudo}],
-            output_config={"effort": LLM_EFFORT, "format": {"type": "json_schema", "schema": schema}},
+            output_config={"effort": esforco, "format": {"type": "json_schema", "schema": schema}},
             **extra,
         )
     except anthropic.AuthenticationError as e:
@@ -319,3 +322,84 @@ async def enriquecer(imoveis: list[Imovel], filtros: Filtros) -> dict:
         "fora_do_limite": max(0, len(com_texto) - LLM_MAX_ANUNCIOS),
         "erros": sorted(set(erros)),
     }
+
+
+# --- 3. Relatório com os N imóveis mais alinhados à busca ---------------------------------------
+
+_SCHEMA_RELATORIO = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["resumo", "ranking", "comparativo", "proximos_passos"],
+    "properties": {
+        "resumo": {"type": "string"},
+        "ranking": {"type": "array", "items": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["id", "nota", "titulo_curto", "por_que", "pontos_fortes", "pontos_de_atencao",
+                         "perguntas_para_o_anunciante"],
+            "properties": {
+                "id": {"type": "string"},
+                "nota": {"type": "integer"},
+                "titulo_curto": {"type": "string"},
+                "por_que": {"type": "string"},
+                "pontos_fortes": {"type": "array", "items": {"type": "string"}},
+                "pontos_de_atencao": {"type": "array", "items": {"type": "string"}},
+                "perguntas_para_o_anunciante": {"type": "array", "items": {"type": "string"}},
+            },
+        }},
+        "comparativo": {"type": "string"},
+        "proximos_passos": {"type": "array", "items": {"type": "string"}},
+    },
+}
+
+_SYSTEM_RELATORIO = """Você é um consultor imobiliário ajudando alguém a escolher um imóvel para ALUGAR em \
+Belo Horizonte. Receberá o pedido original da pessoa, os filtros entendidos e uma lista de candidatos já \
+filtrados. Escolha os N candidatos MAIS ALINHADOS ao pedido e escreva um relatório em português do Brasil.
+
+Regras:
+- Use SOMENTE os dados fornecidos. Nunca invente informação; quando um dado importante não estiver no \
+anúncio (pet, garantias, vaga, condomínio...), diga que não foi informado e transforme em pergunta para o anunciante.
+- Ordene do mais para o menos alinhado. Pese primeiro o que a pessoa pediu explicitamente (tipo, preço/total, \
+distância, quartos, vaga, pet, garantias, desejos), depois custo-benefício.
+- nota: 0 a 10, coerente com a ordem.
+- id: copie exatamente o id do candidato.
+- titulo_curto: tipo + bairro + o diferencial, em poucas palavras.
+- por_que: 1–2 frases objetivas citando os números (total mensal, distância, quartos...).
+- pontos_fortes / pontos_de_atencao: até 4 itens curtos cada.
+- perguntas_para_o_anunciante: até 3 perguntas práticas sobre o que falta saber.
+- resumo: 2–3 frases sobre o que a busca encontrou e o melhor achado.
+- comparativo: um parágrafo comparando os escolhidos (preço x localização x espaço).
+- proximos_passos: até 4 ações concretas (ex.: visitar primeiro X, confirmar Y)."""
+
+
+def _candidato(im: Imovel) -> dict:
+    """Só os campos úteis para a decisão, para caber muitos candidatos numa chamada."""
+    d = im.model_dump(include={"tipo", "bairro", "endereco", "distancia_km", "quartos", "banheiros", "area_m2",
+                               "vagas", "andar", "aluguel", "condominio", "iptu", "total_mensal", "aceita_pet",
+                               "seguro_fianca", "fiador", "caucao", "titulo_capitalizacao", "mobiliado",
+                               "destaques", "atende"})
+    d = {k: v for k, v in d.items() if v not in (None, [], "")}
+    d["id"] = f"{im.fonte}:{im.id}"
+    if im.caracteristicas:
+        d["caracteristicas"] = im.caracteristicas[:15]
+    return d
+
+
+async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: int, max_candidatos: int = 40) -> dict:
+    """Ranking comentado dos `top` imóveis mais alinhados ao pedido. Os candidatos já vêm na ordem do app."""
+    candidatos = imoveis[:max_candidatos]
+    conteudo = json.dumps({
+        "pedido": texto,
+        "filtros_entendidos": filtros.model_dump(exclude_defaults=True, exclude={"interpretado_por"}),
+        "N": min(top, len(candidatos)),
+        "candidatos": [_candidato(im) for im in candidatos],
+    }, ensure_ascii=False)
+    dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO, conteudo, _SCHEMA_RELATORIO, 16000, esforco="medium")
+    validos = {f"{im.fonte}:{im.id}" for im in candidatos}
+    vistos = set()
+    dados["ranking"] = [r for r in dados["ranking"] if r["id"] in validos and not (r["id"] in vistos or vistos.add(r["id"]))][:top]
+    for r in dados["ranking"]:
+        r["nota"] = max(0, min(10, r["nota"]))
+    dados["modelo"] = modelo_interpretar()
+    dados["candidatos_avaliados"] = len(candidatos)
+    return dados

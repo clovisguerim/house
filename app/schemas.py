@@ -126,3 +126,4 @@ class HistoricoItem(BaseModel):
     total: int
     data: datetime
     tem_resultados: bool
+    tem_relatorio: bool = False

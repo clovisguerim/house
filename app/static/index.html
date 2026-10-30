@@ -120,6 +120,17 @@
             <button class="btn ghost small" id="csv">Exportar CSV</button>
           </div>
         </div>
+        <div class="relatorio-bar">
+          <span>📝 <strong>Relatório da IA</strong> com os</span>
+          <select id="rel-top">
+            <option value="3">3 melhores</option>
+            <option value="5" selected>5 melhores</option>
+            <option value="10">10 melhores</option>
+          </select>
+          <button class="btn small ia-btn" id="rel-btn">Gerar relatório</button>
+          <span id="rel-msg" class="muted"></span>
+        </div>
+        <section id="relatorio" class="relatorio" hidden></section>
         <div id="map" hidden></div>
         <div id="cards" class="cards"></div>
       </div>
