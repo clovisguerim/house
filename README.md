@@ -142,3 +142,15 @@ mais de um portal (mesmo aluguel e quartos, a até 150 m) vira um card só, com 
 - **Viva Real** – o site bloqueia acesso automatizado via Cloudflare (HTTP 403). A API informa
   isso em `fontes[].mensagem` e não tenta contornar o bloqueio. Para incluir o Viva Real é
   preciso acesso autorizado (ex.: integração de parceiro do Grupo OLX/ZAP).
+
+## Rodar a busca no PC e publicar no site
+
+Alguns portais (ex.: Netimóveis) bloqueiam o servidor na nuvem, mas respondem no seu PC. Este comando
+roda a busca aqui e grava o resultado no Histórico do site (banco do `.env.local`):
+
+```powershell
+.venv\Scripts\python.exe publicar_busca.py "casa 2 quartos 7 km do gloria até 2500 com vaga"
+.venv\Scripts\python.exe publicar_busca.py "..." --usuario manucfe --relatorio 5   # relatório exige IA
+```
+
+Para usar IA aqui, defina `$env:OPENAI_API_KEY` antes. Opções: `--fontes`, `--max-detalhes`, `--sem-ia`.

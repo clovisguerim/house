@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import SearchHistory, User
-from ..parser import parse_query
+from ..parser import desejos_atendidos, parse_query
 from ..providers.base import FetchError, Fetcher
 from .. import llm
 from ..config import BUSCAS_POR_HORA
@@ -136,6 +136,25 @@ async def buscar(req: SearchRequest, user: User = Depends(get_current_user), db:
 
 
 async def _buscar(req: SearchRequest, user: User, db: Session) -> SearchResponse:
+    resposta = await executar_busca(req)
+    return salvar_busca(db, user, resposta)
+
+
+def salvar_busca(db: Session, user: User, resposta: SearchResponse) -> SearchResponse:
+    """Grava a busca (com os resultados) no histórico do usuário."""
+    registro = SearchHistory(user_id=user.id, query=resposta.texto, filters_json=resposta.filtros.model_dump_json(),
+                             total_results=resposta.total, results_json=resposta.model_dump_json())
+    db.add(registro)
+    db.commit()
+    resposta.historico_id = registro.id
+    resposta.data = registro.created_at
+    resposta.usuario = user.username
+    return resposta
+
+
+async def executar_busca(req: SearchRequest) -> SearchResponse:
+    """Busca completa (interpretação, fontes, IA, filtros, ordenação), sem gravar nada.
+    Usada pela API e pelo comando `publicar_busca.py`."""
     filtros, erro_ia = await _interpretar(req.texto)
     escolhidos = [PROVIDERS[f] for f in (req.fontes or PROVIDERS) if f in PROVIDERS]
     if not escolhidos:
@@ -170,20 +189,17 @@ async def _buscar(req: SearchRequest, user: User, db: Session) -> SearchResponse
         leitura = await llm.enriquecer(imoveis, filtros)
         ia["erros"] += leitura.pop("erros")
         ia["leitura"] = leitura
+    # Desejos conhecidos ("perto de farmácia"...) conferidos nas características do anúncio,
+    # somando ao que a IA marcou
+    for im in imoveis:
+        texto = " ".join([*im.caracteristicas, *im.destaques, im.descricao or ""])
+        im.atende = list(dict.fromkeys(im.atende + desejos_atendidos(texto, filtros.caracteristicas)))
     imoveis = sorted(_filtros_finais(imoveis, filtros), key=lambda im: _ordem(im, filtros))
     for st in status:
         st.encontrados = sum(im.fonte == st.fonte for im in imoveis)
 
-    resposta = SearchResponse(texto=req.texto, filtros=filtros, referencia=referencia, fontes=status,
-                              total=len(imoveis), imoveis=imoveis, ia=ia)
-    registro = SearchHistory(user_id=user.id, query=req.texto, filters_json=filtros.model_dump_json(),
-                             total_results=len(imoveis), results_json=resposta.model_dump_json())
-    db.add(registro)
-    db.commit()
-    resposta.historico_id = registro.id
-    resposta.data = registro.created_at
-    resposta.usuario = user.username
-    return resposta
+    return SearchResponse(texto=req.texto, filtros=filtros, referencia=referencia, fontes=status,
+                          total=len(imoveis), imoveis=imoveis, ia=ia)
 
 
 _PAGINAS_TESTE = {
