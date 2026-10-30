@@ -352,17 +352,14 @@ _SCHEMA_RELATORIO = {
     },
 }
 
-_SYSTEM_RELATORIO = """Você é um consultor imobiliário ajudando alguém a escolher um imóvel para ALUGAR em \
-Belo Horizonte. Receberá o pedido original da pessoa, os filtros entendidos e uma lista de candidatos já \
-filtrados. Escolha os N candidatos MAIS ALINHADOS ao pedido e escreva um relatório em português do Brasil.
+_SYSTEM_RELATORIO = """Você é um consultor imobiliário ajudando alguém a escolher um imóvel para ALUGAR em Belo Horizonte. Receberá o pedido original da pessoa, os filtros entendidos e uma lista de candidatos já filtrados. Escolha EXATAMENTE N candidatos (ou todos, se houver menos de N) — os MAIS ALINHADOS ao pedido — e escreva um relatório em português do Brasil.
 
 Regras:
-- Use SOMENTE os dados fornecidos. Nunca invente informação; quando um dado importante não estiver no \
-anúncio (pet, garantias, vaga, condomínio...), diga que não foi informado e transforme em pergunta para o anunciante.
-- Ordene do mais para o menos alinhado. Pese primeiro o que a pessoa pediu explicitamente (tipo, preço/total, \
-distância, quartos, vaga, pet, garantias, desejos), depois custo-benefício.
+- Use SOMENTE os dados fornecidos. Nunca invente informação; quando um dado importante não estiver no anúncio (pet, garantias, vaga, condomínio...), diga que não foi informado e transforme em pergunta para o anunciante.
+- Ordene do mais para o menos alinhado. Pese primeiro o que a pessoa pediu explicitamente (tipo, preço/total, distância, quartos, vaga, pet, garantias, desejos), depois custo-benefício.
+- Se vier a lista "ja_escolhidos", eles já ocupam as primeiras posições: escolha os PRÓXIMOS, sem repetir, com notas menores ou iguais à última nota já dada.
 - nota: 0 a 10, coerente com a ordem.
-- id: copie exatamente o id do candidato.
+- id: copie exatamente o código do candidato (ex.: "c7").
 - titulo_curto: tipo + bairro + o diferencial, em poucas palavras.
 - por_que: 1–2 frases objetivas citando os números (total mensal, distância, quartos...).
 - pontos_fortes / pontos_de_atencao: até 4 itens curtos cada.
@@ -371,35 +368,66 @@ distância, quartos, vaga, pet, garantias, desejos), depois custo-benefício.
 - comparativo: um parágrafo comparando os escolhidos (preço x localização x espaço).
 - proximos_passos: até 4 ações concretas (ex.: visitar primeiro X, confirmar Y)."""
 
+# Itens por chamada: listas longas numa chamada só voltam incompletas ou cortadas
+_LOTE_RELATORIO = 15
 
-def _candidato(im: Imovel) -> dict:
+
+def _candidato(codigo: str, im: Imovel) -> dict:
     """Só os campos úteis para a decisão, para caber muitos candidatos numa chamada."""
     d = im.model_dump(include={"tipo", "bairro", "endereco", "distancia_km", "quartos", "banheiros", "area_m2",
                                "vagas", "andar", "aluguel", "condominio", "iptu", "total_mensal", "aceita_pet",
                                "seguro_fianca", "fiador", "caucao", "titulo_capitalizacao", "mobiliado",
                                "destaques", "atende"})
     d = {k: v for k, v in d.items() if v not in (None, [], "")}
-    d["id"] = f"{im.fonte}:{im.id}"
+    d["id"] = codigo  # código curto (c1, c2...): o modelo erra menos ao copiar do que com o id do portal
     if im.caracteristicas:
         d["caracteristicas"] = im.caracteristicas[:15]
     return d
 
 
-async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: int, max_candidatos: int = 40) -> dict:
-    """Ranking comentado dos `top` imóveis mais alinhados ao pedido. Os candidatos já vêm na ordem do app."""
-    candidatos = imoveis[:max_candidatos]
-    conteudo = json.dumps({
-        "pedido": texto,
-        "filtros_entendidos": filtros.model_dump(exclude_defaults=True, exclude={"interpretado_por"}),
-        "N": min(top, len(candidatos)),
-        "candidatos": [_candidato(im) for im in candidatos],
-    }, ensure_ascii=False)
-    dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO, conteudo, _SCHEMA_RELATORIO, 16000, esforco="medium")
-    validos = {f"{im.fonte}:{im.id}" for im in candidatos}
-    vistos = set()
-    dados["ranking"] = [r for r in dados["ranking"] if r["id"] in validos and not (r["id"] in vistos or vistos.add(r["id"]))][:top]
-    for r in dados["ranking"]:
-        r["nota"] = max(0, min(10, r["nota"]))
-    dados["modelo"] = modelo_interpretar()
-    dados["candidatos_avaliados"] = len(candidatos)
-    return dados
+async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: int) -> dict:
+    """Ranking comentado dos `top` imóveis mais alinhados ao pedido. Os candidatos já vêm na ordem do app.
+
+    O ranking é pedido em lotes de até _LOTE_RELATORIO; se o modelo devolver menos que o pedido, a
+    próxima chamada pede os que faltam entre os candidatos ainda não escolhidos."""
+    candidatos = imoveis[:max(40, top + 20)]
+    top = min(top, len(candidatos))
+    codigos = {f"c{k}": im for k, im in enumerate(candidatos, 1)}
+    filtros_json = filtros.model_dump(exclude_defaults=True, exclude={"interpretado_por"})
+
+    ranking: list[dict] = []
+    textos: dict = {}
+    for _ in range(top // _LOTE_RELATORIO + 3):  # lotes necessários + 2 tentativas de completar
+        faltam = top - len(ranking)
+        if faltam <= 0:
+            break
+        escolhidos = {r["id"] for r in ranking}
+        restantes = {c: im for c, im in codigos.items() if c not in escolhidos}
+        if not restantes:
+            break
+        pedido = {
+            "pedido": texto,
+            "filtros_entendidos": filtros_json,
+            "N": min(faltam, _LOTE_RELATORIO),
+            "candidatos": [_candidato(c, im) for c, im in restantes.items()],
+        }
+        if ranking:
+            pedido["ja_escolhidos"] = [{"id": r["id"], "titulo_curto": r["titulo_curto"], "nota": r["nota"]}
+                                       for r in ranking]
+        dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO, json.dumps(pedido, ensure_ascii=False),
+                            _SCHEMA_RELATORIO, 16000, esforco="medium")
+        if not textos:  # resumo/comparativo/próximos passos vêm da 1ª chamada, que vê os melhores
+            textos = {k: dados[k] for k in ("resumo", "comparativo", "proximos_passos")}
+        novos = 0
+        for r in dados["ranking"]:
+            if r["id"] in restantes and r["id"] not in {x["id"] for x in ranking} and len(ranking) < top:
+                r["nota"] = max(0, min(10, r["nota"]))
+                ranking.append(r)
+                novos += 1
+        if novos == 0:
+            break  # o modelo não acrescentou nada válido: não insiste
+
+    for r in ranking:  # volta para o id real do anúncio
+        im = codigos[r["id"]]
+        r["id"] = f"{im.fonte}:{im.id}"
+    return {**textos, "ranking": ranking, "modelo": modelo_interpretar(), "candidatos_avaliados": len(candidatos)}

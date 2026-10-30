@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>House · Aluguel em BH</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=2">
 </head>
 <body>
 
@@ -122,7 +122,7 @@
         </div>
         <div class="relatorio-bar">
           <span>📝 <strong>Relatório da IA</strong> com os</span>
-          <input id="rel-top" type="number" min="1" max="20" value="10" aria-label="Quantidade de imóveis no relatório">
+          <input id="rel-top" type="number" min="1" max="40" value="10" aria-label="Quantidade de imóveis no relatório">
           <span>melhores</span>
           <button class="btn small ia-btn" id="rel-btn">Gerar relatório</button>
           <span id="rel-msg" class="muted"></span>
@@ -188,6 +188,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v=2"></script>
 </body>
 </html>

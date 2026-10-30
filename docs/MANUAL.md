@@ -127,7 +127,7 @@ o círculo azul, o raio pedido.
 ## 4. Relatório da IA
 
 Abaixo do cabeçalho dos resultados fica a faixa roxa **📝 Relatório da IA com os [10] melhores**
-(visível na imagem de [resultados](#3-entendendo-os-resultados)). Escolha quantos imóveis (1 a 20,
+(visível na imagem de [resultados](#3-entendendo-os-resultados)). Escolha quantos imóveis (1 a 40,
 padrão 10) e clique em **Gerar relatório** (até ~1 minuto). A IA recebe seu pedido e os 40 melhores
 candidatos e devolve:
 

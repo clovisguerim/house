@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
@@ -54,6 +54,16 @@ app = FastAPI(
     version="1.1.0",
     lifespan=lifespan,
 )
+@app.middleware("http")
+async def sem_cache_velho(request: Request, call_next):
+    """Página e arquivos da interface: o navegador sempre confere se há versão nova (ETag/304).
+    Sem isso, depois de um deploy o navegador seguia usando o app.js antigo do cache."""
+    resposta = await call_next(request)
+    if request.url.path == "/" or request.url.path.startswith("/static/"):
+        resposta.headers["Cache-Control"] = "no-cache"
+    return resposta
+
+
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(search.router)

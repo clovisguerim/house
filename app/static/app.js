@@ -1,11 +1,19 @@
 "use strict";
 
+function lerPreferencia(chave, padrao) {
+  try {
+    return localStorage.getItem(chave) || padrao;
+  } catch {
+    return padrao;
+  }
+}
+
 // ---------- Estado ----------
 const state = {
   token: localStorage.getItem("house_token"),
   me: null,
   result: null,       // SearchResponse exibido
-  mode: "lista",
+  mode: lerPreferencia("house_modo", "lista"),  // "lista" ou "mapa", lembrado entre visitas
   histScope: "meu",
   history: [],
   map: null,
@@ -193,7 +201,8 @@ function switchView(name) {
   $$(".view").forEach((v) => (v.hidden = v.id !== `view-${name}`));
   if (name === "historico") loadHistory();
   if (name === "usuarios") loadUsers();
-  if (name === "buscar" && state.mode === "mapa") setTimeout(() => state.map?.invalidateSize(), 50);
+  // O Leaflet não mede um mapa escondido: ao voltar para Buscar, redesenha com a área já visível
+  if (name === "buscar" && state.mode === "mapa" && state.result) setTimeout(() => renderMap(visibleItems()), 60);
 }
 $$(".nav-btn").forEach((b) => b.addEventListener("click", () => switchView(b.dataset.view)));
 
@@ -359,10 +368,10 @@ async function carregarRelatorio(historicoId) {
 $("#rel-btn").addEventListener("click", async () => {
   if (!state.result?.historico_id) return;
   const top = Math.round(+$("#rel-top").value);
-  if (!(top >= 1 && top <= 20)) return ($("#rel-msg").textContent = "Escolha de 1 a 20 imóveis.");
+  if (!(top >= 1 && top <= 40)) return ($("#rel-msg").textContent = "Escolha de 1 a 40 imóveis.");
   const btn = $("#rel-btn");
   btn.disabled = true;
-  $("#rel-msg").textContent = "A IA está analisando os candidatos… (até 1 min)";
+  $("#rel-msg").textContent = `A IA está analisando os candidatos… (${top > 15 ? "1–3 min" : "até 1 min"})`;
   try {
     const rel = await api(`/historico/${state.result.historico_id}/relatorio`, { method: "POST", json: { top } });
     $("#rel-msg").textContent = "";
@@ -454,14 +463,22 @@ function renderResults() {
 
 ["#sort", "#f-pet", "#f-vaga"].forEach((s) => $(s).addEventListener("change", () => state.result && renderResults()));
 
+function aplicarModo() {
+  $$("[data-mode]").forEach((x) => x.classList.toggle("active", x.dataset.mode === state.mode));
+  $("#map").hidden = state.mode !== "mapa";
+}
+
 $$("[data-mode]").forEach((b) =>
   b.addEventListener("click", () => {
     state.mode = b.dataset.mode;
-    $$("[data-mode]").forEach((x) => x.classList.toggle("active", x === b));
-    $("#map").hidden = state.mode !== "mapa";
+    try {
+      localStorage.setItem("house_modo", state.mode);
+    } catch { /* storage indisponível */ }
+    aplicarModo();
     if (state.result) renderResults();
   })
 );
+aplicarModo();
 
 // ---------- Mapa ----------
 function renderMap(items) {
