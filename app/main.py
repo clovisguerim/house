@@ -9,7 +9,7 @@ from sqlalchemy import inspect, text
 from .config import ADMIN_SEED
 from .db import Base, SessionLocal, engine
 from .models import User
-from .routers import auth, regras, search, users
+from .routers import admin_onibus, auth, regras, search, users
 from .security import hash_password, verify_password
 
 STATIC = Path(__file__).parent / "static"
@@ -68,6 +68,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(search.router)
 app.include_router(regras.router)
+app.include_router(admin_onibus.router)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 

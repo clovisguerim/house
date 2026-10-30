@@ -65,6 +65,17 @@ class Feedback(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class DadoApp(Base):
+    """Dados do app atualizáveis pelo admin (ex.: base de ônibus), guardados no banco porque o disco
+    do servidor gratuito é apagado a cada reinício."""
+    __tablename__ = "dados_app"
+
+    chave: Mapped[str] = mapped_column(String(64), primary_key=True)
+    valor: Mapped[str] = mapped_column(Text)
+    atualizado_em: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    atualizado_por: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
 class HttpCache(Base):
     __tablename__ = "http_cache"
 

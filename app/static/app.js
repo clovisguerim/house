@@ -228,7 +228,7 @@ function switchView(name) {
   $$(".nav-btn").forEach((b) => b.classList.toggle("active", b.dataset.view === name));
   $$(".view").forEach((v) => (v.hidden = v.id !== `view-${name}`));
   if (name === "historico") loadHistory();
-  if (name === "usuarios") loadUsers();
+  if (name === "usuarios") { loadUsers(); loadOnibusAdmin(); }
   if (name === "regras") loadRegras();
   // O Leaflet não mede um mapa escondido: ao voltar para Buscar, redesenha com a área já visível
   if (name === "buscar" && state.mode === "mapa" && state.result) setTimeout(() => renderMap(visibleItems()), 60);
@@ -809,6 +809,54 @@ $("#diag-btn").addEventListener("click", async () => {
     $("#diag").innerHTML = `<span class="source off">${esc(err.message)}</span>`;
   } finally {
     btn.disabled = false;
+  }
+});
+
+// ---------- Base de ônibus (admin) ----------
+const dataGtfs = (s) => (s && s.length === 8 ? `${s.slice(6, 8)}/${s.slice(4, 6)}/${s.slice(0, 4)}` : "?");
+
+async function loadOnibusAdmin() {
+  try {
+    const o = await api("/admin/onibus");
+    const feeds = (o.feeds || []).map((f) => `${esc(f.sistema)}: validade ${dataGtfs(f.validade?.[0])} a ${dataGtfs(f.validade?.[1])}${f.versao ? ` (versão ${esc(f.versao)})` : ""}`).join(" · ");
+    const origem = o.origem?.tipo === "enviada pelo admin"
+      ? `enviada por <b>${esc(o.origem.por || "?")}</b> em ${dataHora(o.origem.em)}`
+      : "arquivo original do app";
+    $("#onibus-atual").innerHTML = `<b>${o.linhas}</b> linhas · <b>${o.pontos}</b> pontos · ${origem}<br>${feeds}`;
+    $("#onibus-original").hidden = o.origem?.tipo !== "enviada pelo admin";
+  } catch (err) {
+    $("#onibus-atual").textContent = err.message;
+  }
+}
+
+$("#onibus-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const dados = new FormData(form);
+  if (!dados.get("suplementar")?.name) dados.delete("suplementar");
+  const btn = form.querySelector("button[type=submit]");
+  btn.disabled = true;
+  $("#onibus-msg").textContent = "Enviando e processando… (até 1–2 min)";
+  try {
+    await api("/admin/onibus", { method: "POST", body: dados });
+    form.reset();
+    $("#onibus-msg").textContent = "Base atualizada. As próximas buscas já usam os dados novos.";
+    loadOnibusAdmin();
+  } catch (err) {
+    $("#onibus-msg").textContent = err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("#onibus-original").addEventListener("click", async () => {
+  if (!confirm("Descartar a base enviada e voltar ao arquivo original do app?")) return;
+  try {
+    await api("/admin/onibus", { method: "DELETE" });
+    $("#onibus-msg").textContent = "Voltou à base original.";
+    loadOnibusAdmin();
+  } catch (err) {
+    $("#onibus-msg").textContent = err.message;
   }
 });
 

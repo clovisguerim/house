@@ -208,6 +208,14 @@ Na aba **Usuários**:
 **Diagnóstico das fontes → Testar agora**: verifica, a partir do servidor, quais portais estão
 respondendo, quantos bairros o House conhece e se a IA está ligada (e com qual modelo).
 
+**Base de ônibus**: mostra quantas linhas e pontos estão em uso, a validade dos dados e quem
+atualizou. Para atualizar, baixe no navegador o **gtfsfiles.zip** do
+[sistema convencional](https://dados.pbh.gov.br/dataset/gtfs-estatico-do-sistema-convencional) (e, se
+quiser, do [suplementar](https://dados.pbh.gov.br/dataset/feed-gtfs-estatico-do-sistema-suplementar)),
+envie em **Atualizar base de ônibus** e aguarde o processamento (até 1–2 min). A base nova vale na hora
+para as próximas buscas (as já feitas mudam ao clicar em **Refazer**) e fica guardada no banco.
+**Voltar à base original** descarta a enviada. Arquivos que não sejam GTFS de BH são recusados.
+
 ---
 
 ## 7. Rodar no PC, publicar no site e gerar PDF

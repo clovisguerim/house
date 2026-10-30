@@ -337,3 +337,10 @@ ul.ask li::marker { content: "? "; color: var(--primary); }
 .onibus li { margin: 2px 0; }
 /* Na impressão do relatório, a lista de ônibus sai aberta */
 @media print { details.onibus > ul { display: block !important; } details.onibus summary::marker { content: ""; } }
+
+/* Base de ônibus (admin) */
+.onibus-atual { margin-bottom: 10px; font-size: 13px; }
+.onibus-form { display: flex; flex-direction: column; gap: 10px; background: var(--surface); border: 1px solid var(--border);
+               border-radius: var(--radius); padding: 14px; }
+.onibus-form ol { margin: 0; padding-left: 18px; font-size: 13px; }
+.onibus-form label { max-width: 520px; }

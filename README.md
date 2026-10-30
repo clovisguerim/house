@@ -72,6 +72,7 @@ O PC precisa estar ligado e conectado. `.\publicar-tailscale.ps1 -Parar` remove 
 | GET | `/admin/historico?usuario=` | buscas de todos os usuários (admin) |
 | POST/GET | `/historico/{id}/relatorio` | gera (top 1–40) / reabre o relatório da IA |
 | POST/GET | `/historico/{id}/feedback` | avalia o relatório (nota 1–5 + justificativa; vira regra) / lista avaliações |
+| GET/POST/DELETE | `/admin/onibus` | base de ônibus em uso / envia GTFS (multipart: convencional, suplementar) / volta à original |
 | GET/POST | `/regras` | regras da IA visíveis (compartilhadas + suas) / cria regra |
 | PATCH/DELETE | `/regras/{id}` | edita (texto, compartilhada, ativa) / exclui — autor ou admin |
 
@@ -166,9 +167,10 @@ Para usar IA aqui, defina `$env:OPENAI_API_KEY` antes. Opções: `--fontes`, `--
 
 `app/data/onibus_bh.json` traz os pontos de ônibus de BH e as linhas de cada um, gerado do GTFS
 oficial da BHTRANS (convencional + suplementar; cópia MobilityData, validade 2023). As linhas
-metropolitanas (DER-MG) não têm GTFS público. Para atualizar com os arquivos mais novos da PBH
-(baixe no navegador em dados.pbh.gov.br):
+metropolitanas (DER-MG) não têm GTFS público. No site, um admin atualiza a base em **Usuários →
+Base de ônibus** enviando os `gtfsfiles.zip` da PBH (fica guardada no banco). Para atualizar o arquivo
+do repositório (baixe no navegador em dados.pbh.gov.br):
 
 ```powershell
-.venv\Scripts\python.exe atualizar_onibus.py C:\pasta\com\os\zips
+.venv\Scripts\python.exe atualizar_onibus.py convencional.zip [suplementar.zip]
 ```

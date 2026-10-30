@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>House · Aluguel em BH</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/static/styles.css?v=8">
+  <link rel="stylesheet" href="/static/styles.css?v=9">
 </head>
 <body>
 
@@ -208,11 +208,36 @@
         <button class="btn small" id="diag-btn">Testar agora</button>
       </div>
       <div id="diag" class="sources"></div>
+
+      <div class="results-head">
+        <div>
+          <h2>Base de ônibus</h2>
+          <div class="muted">Pontos e linhas usados para mostrar os ônibus a até 500 m de cada imóvel (GTFS oficial da BHTRANS).</div>
+        </div>
+      </div>
+      <div id="onibus-atual" class="onibus-atual muted">Carregando…</div>
+      <form id="onibus-form" class="onibus-form">
+        <ol class="muted">
+          <li>Baixe no navegador o arquivo <b>gtfsfiles.zip</b> de
+            <a href="https://dados.pbh.gov.br/dataset/gtfs-estatico-do-sistema-convencional" target="_blank" rel="noopener noreferrer">GTFS estático do sistema convencional</a>
+            e, se quiser, o de
+            <a href="https://dados.pbh.gov.br/dataset/feed-gtfs-estatico-do-sistema-suplementar" target="_blank" rel="noopener noreferrer">sistema suplementar</a>
+            (o site da PBH não permite download automático).</li>
+          <li>Envie os arquivos abaixo. O processamento leva até 1–2 minutos.</li>
+        </ol>
+        <label>Convencional (obrigatório) <input type="file" name="convencional" accept=".zip" required></label>
+        <label>Suplementar (opcional) <input type="file" name="suplementar" accept=".zip"></label>
+        <div class="row">
+          <button class="btn primary small" type="submit">Atualizar base de ônibus</button>
+          <button class="btn small ghost" type="button" id="onibus-original">Voltar à base original</button>
+          <span id="onibus-msg" class="muted"></span>
+        </div>
+      </form>
     </section>
   </main>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="/static/app.js?v=8"></script>
+<script src="/static/app.js?v=9"></script>
 </body>
 </html>
