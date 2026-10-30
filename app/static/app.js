@@ -358,11 +358,13 @@ async function carregarRelatorio(historicoId) {
 
 $("#rel-btn").addEventListener("click", async () => {
   if (!state.result?.historico_id) return;
+  const top = Math.round(+$("#rel-top").value);
+  if (!(top >= 1 && top <= 20)) return ($("#rel-msg").textContent = "Escolha de 1 a 20 imóveis.");
   const btn = $("#rel-btn");
   btn.disabled = true;
   $("#rel-msg").textContent = "A IA está analisando os candidatos… (até 1 min)";
   try {
-    const rel = await api(`/historico/${state.result.historico_id}/relatorio`, { method: "POST", json: { top: +$("#rel-top").value } });
+    const rel = await api(`/historico/${state.result.historico_id}/relatorio`, { method: "POST", json: { top } });
     $("#rel-msg").textContent = "";
     renderRelatorio(rel);
     $("#relatorio").scrollIntoView({ behavior: "smooth", block: "start" });

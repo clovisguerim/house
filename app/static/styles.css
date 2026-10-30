@@ -231,6 +231,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 20px 24px 48px; }
   padding: 10px 14px; margin-bottom: 16px; border-radius: var(--radius);
   background: #efe9ff; color: #3b2a85;
 }
+#rel-top { width: 64px; padding: 5px 8px; }
 .btn.ia-btn { background: #5b3cc4; border-color: #5b3cc4; color: #fff; }
 .relatorio {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);

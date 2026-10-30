@@ -288,7 +288,7 @@ def abrir_historico(historico_id: int, user: User = Depends(get_current_user), d
 
 
 class RelatorioRequest(BaseModel):
-    top: int = Field(default=5, ge=1, le=15)
+    top: int = Field(default=10, ge=1, le=20)
 
 
 def _resposta_relatorio(row: SearchHistory) -> dict:
