@@ -153,4 +153,5 @@ roda a busca aqui e grava o resultado no Histórico do site (banco do `.env.loca
 .venv\Scripts\python.exe publicar_busca.py "..." --usuario manucfe --relatorio 5   # relatório exige IA
 ```
 
-Para usar IA aqui, defina `$env:OPENAI_API_KEY` antes. Opções: `--fontes`, `--max-detalhes`, `--sem-ia`.
+Para usar IA aqui, defina `$env:OPENAI_API_KEY` antes. Opções: `--fontes`, `--max-detalhes`, `--sem-ia`,
+`--pdf output/arquivo.pdf` (PDF com fotos, via Edge/Chrome), `--pdf-top N`, `--nao-publicar`.

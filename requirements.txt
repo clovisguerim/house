@@ -11,3 +11,4 @@ unidecode
 anthropic
 psycopg[binary]
 openai
+pillow

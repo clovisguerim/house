@@ -40,6 +40,9 @@ async def main():
     ap.add_argument("--max-detalhes", type=int, default=200)
     ap.add_argument("--sem-ia", action="store_true", help="não ler os anúncios com IA")
     ap.add_argument("--relatorio", type=int, metavar="N", help="gera também o relatório da IA com os N melhores")
+    ap.add_argument("--pdf", metavar="ARQUIVO", help="salva também um PDF (ex.: output/busca.pdf)")
+    ap.add_argument("--pdf-top", type=int, default=30, metavar="N", help="quantos imóveis listar no PDF (padrão 30)")
+    ap.add_argument("--nao-publicar", action="store_true", help="não grava no site (só PDF/saída na tela)")
     args = ap.parse_args()
 
     # A busca roda com o banco/cache locais (padrão do app); o destino é um engine separado
@@ -55,12 +58,14 @@ async def main():
     from app.schemas import SearchRequest
 
     Base.metadata.create_all(engine_local)  # cache local pode ainda não existir
-    destino = create_engine(normalizar_url_db(url_do_site()), pool_pre_ping=True)
-    with Session(destino) as db:
-        user = db.query(User).filter(User.username == args.usuario).first()
-        if not user:
-            sys.exit(f"Usuário '{args.usuario}' não existe no site.")
-        user_id = user.id
+    destino = None
+    if not args.nao_publicar:
+        destino = create_engine(normalizar_url_db(url_do_site()), pool_pre_ping=True)
+        with Session(destino) as db:
+            user = db.query(User).filter(User.username == args.usuario).first()
+            if not user:
+                sys.exit(f"Usuário '{args.usuario}' não existe no site.")
+            user_id = user.id
 
     print(f"Buscando: {args.texto}")
     print(f"IA: {'ligada (' + llm.provedor() + ')' if llm.ativa() else 'desligada (regras)'}")
@@ -78,14 +83,20 @@ async def main():
             relatorio = await llm.relatorio(resposta.texto, resposta.filtros, resposta.imoveis, args.relatorio)
             relatorio.update(top=args.relatorio, gerado_em=datetime.utcnow().isoformat())
 
-    with Session(destino) as db:
-        row = SearchHistory(user_id=user_id, query=resposta.texto, filters_json=resposta.filtros.model_dump_json(),
-                            total_results=resposta.total, results_json=resposta.model_dump_json(),
-                            relatorio_json=json.dumps(relatorio, ensure_ascii=False) if relatorio else None)
-        db.add(row)
-        db.commit()
-        print(f"Publicado no site: Histórico de '{args.usuario}', busca #{row.id}"
-              f"{' (com relatório)' if relatorio else ''}.")
+    if args.pdf:
+        from app.exportar import html_busca_com_fotos, salvar_pdf
+        pdf = salvar_pdf(await html_busca_com_fotos(resposta, relatorio, args.pdf_top), Path(args.pdf))
+        print(f"PDF salvo em: {pdf}")
+
+    if destino is not None:
+        with Session(destino) as db:
+            row = SearchHistory(user_id=user_id, query=resposta.texto, filters_json=resposta.filtros.model_dump_json(),
+                                total_results=resposta.total, results_json=resposta.model_dump_json(),
+                                relatorio_json=json.dumps(relatorio, ensure_ascii=False) if relatorio else None)
+            db.add(row)
+            db.commit()
+            print(f"Publicado no site: Histórico de '{args.usuario}', busca #{row.id}"
+                  f"{' (com relatório)' if relatorio else ''}.")
 
 
 if __name__ == "__main__":
