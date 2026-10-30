@@ -260,7 +260,7 @@ ul.ask li::marker { content: "? "; color: var(--primary); }
   .relatorio-bar { background: #2d2547; color: #d9ceff; }
   .rel-nota { background: #2d2547; color: #c4b5fd; }
 }
-@media (max-width: 760px) {
+@media screen and (max-width: 760px) {  /* só tela: a folha A4 impressa é estreita e escondia as fotos */
   .rel-item { grid-template-columns: 40px 1fr; }
   .rel-foto { display: none; }
   .rel-cols { grid-template-columns: 1fr; }

@@ -8,6 +8,7 @@ import asyncio
 import hashlib
 import json
 import os
+import re
 import time
 
 import anthropic
@@ -359,7 +360,7 @@ Regras:
 - Ordene do mais para o menos alinhado. Pese primeiro o que a pessoa pediu explicitamente (tipo, preço/total, distância, quartos, vaga, pet, garantias, desejos), depois custo-benefício.
 - Se vier a lista "ja_escolhidos", eles já ocupam as primeiras posições: escolha os PRÓXIMOS, sem repetir, com notas menores ou iguais à última nota já dada.
 - nota: 0 a 10, coerente com a ordem.
-- id: copie exatamente o código do candidato (ex.: "c7").
+- id: copie exatamente o código do candidato (ex.: "c7"). Use esse código SÓ no campo id: nos textos, nunca escreva códigos como "c7" — fale do imóvel pelo tipo e bairro.
 - titulo_curto: tipo + bairro + o diferencial, em poucas palavras.
 - por_que: 1–2 frases objetivas citando os números (total mensal, distância, quartos...).
 - pontos_fortes / pontos_de_atencao: até 4 itens curtos cada.
@@ -385,49 +386,121 @@ def _candidato(codigo: str, im: Imovel) -> dict:
     return d
 
 
+_SCHEMA_SINTESE = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["resumo", "comparativo", "proximos_passos"],
+    "properties": {
+        "resumo": {"type": "string"},
+        "comparativo": {"type": "string"},
+        "proximos_passos": {"type": "array", "items": {"type": "string"}},
+    },
+}
+
+_SYSTEM_SINTESE = """Você é um consultor imobiliário. Recebe o pedido de quem procura imóvel para alugar em Belo Horizonte e o ranking final já pronto. Escreva em português do Brasil:
+- resumo: 2–3 frases sobre o que a busca encontrou e o melhor achado;
+- comparativo: um parágrafo comparando os primeiros colocados (preço x localização x espaço);
+- proximos_passos: até 4 ações concretas.
+Refira-se aos imóveis SEMPRE pela posição e pelo título (ex.: "o 1º, área privativa no Glória"). Use só os dados fornecidos."""
+
+_CODIGO = re.compile(r"\b[cC]\s?(\d{1,3})\b")
+
+
+# Código citado num texto, com a palavra anterior (artigo/preposição) para não repetir "o o 1º"
+_CODIGO_NO_TEXTO = re.compile(r"\b(?:(o|a|do|da|no|na|ao|pelo|pela|com o|com a)\s+)?[cC]\s?(\d{1,3})\b", re.IGNORECASE)
+
+
+def _codigo_valido(bruto: str, validos: dict) -> str | None:
+    """Aceita "c7", "C7", "c 7" ou "7" como o código c7."""
+    m = _CODIGO.fullmatch(bruto.strip()) or re.fullmatch(r"(\d{1,3})", bruto.strip())
+    return f"c{m.group(1)}" if m and f"c{m.group(1)}" in validos else None
+
+
 async def relatorio(texto: str, filtros: Filtros, imoveis: list[Imovel], top: int) -> dict:
     """Ranking comentado dos `top` imóveis mais alinhados ao pedido. Os candidatos já vêm na ordem do app.
 
-    O ranking é pedido em lotes de até _LOTE_RELATORIO; se o modelo devolver menos que o pedido, a
-    próxima chamada pede os que faltam entre os candidatos ainda não escolhidos."""
+    1. Ranking em lotes (listas longas numa chamada só voltam incompletas). Lote que não acrescenta
+       nada é repetido menor; o que ainda faltar é completado pela ordem do app, sem comentário da IA.
+    2. Síntese (resumo, comparativo, próximos passos) escrita sobre o ranking final, por posição.
+    Códigos internos (c7) que escaparem nos textos viram "o Nº (título)"."""
     candidatos = imoveis[:max(40, top + 20)]
     top = min(top, len(candidatos))
     codigos = {f"c{k}": im for k, im in enumerate(candidatos, 1)}
     filtros_json = filtros.model_dump(exclude_defaults=True, exclude={"interpretado_por"})
 
     ranking: list[dict] = []
-    textos: dict = {}
-    for _ in range(top // _LOTE_RELATORIO + 3):  # lotes necessários + 2 tentativas de completar
+    lote = _LOTE_RELATORIO
+    for _ in range(top // _LOTE_RELATORIO + 5):
         faltam = top - len(ranking)
         if faltam <= 0:
             break
         escolhidos = {r["id"] for r in ranking}
         restantes = {c: im for c, im in codigos.items() if c not in escolhidos}
-        if not restantes:
-            break
-        pedido = {
-            "pedido": texto,
-            "filtros_entendidos": filtros_json,
-            "N": min(faltam, _LOTE_RELATORIO),
-            "candidatos": [_candidato(c, im) for c, im in restantes.items()],
-        }
+        pedido = {"pedido": texto, "filtros_entendidos": filtros_json, "N": min(faltam, lote),
+                  "candidatos": [_candidato(c, im) for c, im in restantes.items()]}
         if ranking:
-            pedido["ja_escolhidos"] = [{"id": r["id"], "titulo_curto": r["titulo_curto"], "nota": r["nota"]}
-                                       for r in ranking]
+            pedido["ja_escolhidos"] = [{"titulo_curto": r["titulo_curto"], "nota": r["nota"]} for r in ranking]
         dados = await _json(modelo_interpretar(), _SYSTEM_RELATORIO, json.dumps(pedido, ensure_ascii=False),
                             _SCHEMA_RELATORIO, 16000, esforco="medium")
-        if not textos:  # resumo/comparativo/próximos passos vêm da 1ª chamada, que vê os melhores
-            textos = {k: dados[k] for k in ("resumo", "comparativo", "proximos_passos")}
         novos = 0
         for r in dados["ranking"]:
-            if r["id"] in restantes and r["id"] not in {x["id"] for x in ranking} and len(ranking) < top:
+            codigo = _codigo_valido(r["id"], restantes)
+            if codigo and codigo not in {x["id"] for x in ranking} and len(ranking) < top:
+                r["id"] = codigo
                 r["nota"] = max(0, min(10, r["nota"]))
                 ranking.append(r)
                 novos += 1
         if novos == 0:
-            break  # o modelo não acrescentou nada válido: não insiste
+            lote = max(5, lote // 2)  # tenta de novo pedindo menos de uma vez
+
+    # Ainda faltando: completa com os próximos da ordem do app (que já prioriza o pedido)
+    ultima_nota = ranking[-1]["nota"] if ranking else 5
+    for c, im in codigos.items():
+        if len(ranking) >= top:
+            break
+        if c in {r["id"] for r in ranking}:
+            continue
+        ranking.append({"id": c, "nota": ultima_nota, "sem_ia": True,
+                        "titulo_curto": f"{(im.tipo or 'imóvel').replace('-', ' ').capitalize()} no {im.bairro or 'bairro não informado'}",
+                        "por_que": "Incluído pela ordem do app (prioridades e distância); a IA não comentou este imóvel.",
+                        "pontos_fortes": [], "pontos_de_atencao": [], "perguntas_para_o_anunciante": []})
+
+    # Síntese sobre o ranking final, citando posições
+    resumo_ranking = [{"posicao": n, "titulo": r["titulo_curto"], "nota": r["nota"],
+                       **{k: v for k, v in _candidato(r["id"], codigos[r["id"]]).items() if k != "id"}}
+                      for n, r in enumerate(ranking[:15], 1)]
+    try:
+        textos = await _json(modelo_interpretar(), _SYSTEM_SINTESE,
+                             json.dumps({"pedido": texto, "ranking": resumo_ranking, "total_no_ranking": len(ranking)},
+                                        ensure_ascii=False), _SCHEMA_SINTESE, 8000, esforco="medium")
+    except (ErroIA, ValueError):
+        textos = {"resumo": "", "comparativo": "", "proximos_passos": []}
+
+    # Troca códigos que escaparam ("o c20") por posição + título, ou tipo + bairro se ficou de fora
+    posicao = {r["id"]: (n, r["titulo_curto"]) for n, r in enumerate(ranking, 1)}
+
+    def legivel(t: str) -> str:
+        def sub(m):
+            artigo, c = m.group(1), f"c{m.group(2)}"  # "o c1" -> "o 1º"; "do c3" -> "do 3º"
+            prefixo = f"{artigo} " if artigo else "o "
+            if c in posicao:
+                return f"{prefixo}{posicao[c][0]}º ({posicao[c][1]})"
+            im = codigos.get(c)
+            if not im:
+                return m.group(0)
+            return f"{prefixo}imóvel ({(im.tipo or 'imóvel').replace('-', ' ')} no {im.bairro})"
+        return _CODIGO_NO_TEXTO.sub(sub, t)
+
+    for r in ranking:
+        for campo in ("titulo_curto", "por_que"):
+            r[campo] = legivel(r[campo])
+        for campo in ("pontos_fortes", "pontos_de_atencao", "perguntas_para_o_anunciante"):
+            r[campo] = [legivel(x) for x in r[campo]]
+    textos = {"resumo": legivel(textos["resumo"]), "comparativo": legivel(textos["comparativo"]),
+              "proximos_passos": [legivel(x) for x in textos["proximos_passos"]]}
 
     for r in ranking:  # volta para o id real do anúncio
         im = codigos[r["id"]]
         r["id"] = f"{im.fonte}:{im.id}"
-    return {**textos, "ranking": ranking, "modelo": modelo_interpretar(), "candidatos_avaliados": len(candidatos)}
+    return {**textos, "ranking": ranking, "modelo": modelo_interpretar(), "candidatos_avaliados": len(candidatos),
+            "comentados_pela_ia": sum(not r.get("sem_ia") for r in ranking)}

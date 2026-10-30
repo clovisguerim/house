@@ -325,7 +325,7 @@ function renderRelatorio(rel) {
     return `
       <article class="rel-item">
         <div class="rel-pos">${n + 1}º<span class="rel-nota" title="Alinhamento com a busca">${r.nota}/10</span></div>
-        ${foto ? `<img class="rel-foto" src="${esc(safeUrl(foto))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<div class="rel-foto"></div>`}
+        ${foto ? `<img class="rel-foto" src="${esc(safeUrl(foto))}" alt="" loading="eager" referrerpolicy="no-referrer">` : `<div class="rel-foto"></div>`}
         <div class="rel-corpo">
           <h3>${esc(r.titulo_curto)}
             ${i.latitude != null ? `<button type="button" class="btn small ghost" data-ver-mapa="${esc(r.id)}">📍 Ver no mapa</button>` : ""}</h3>
@@ -335,7 +335,7 @@ function renderRelatorio(rel) {
             ${i.distancia_km != null ? ` · ${i.distancia_km.toLocaleString("pt-BR")} km` : ""}
             · <a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">ver anúncio ↗</a>
           </div>
-          <p>${esc(r.por_que)}</p>
+          <p>${esc(r.por_que)}${r.sem_ia ? ` <span class="badge" title="A IA não comentou este; entrou pela ordem do app">sem comentário da IA</span>` : ""}</p>
           <div class="rel-cols">
             <div><h4>Pontos fortes</h4>${lista(r.pontos_fortes, "ok")}</div>
             <div><h4>Atenção</h4>${lista(r.pontos_de_atencao, "warn")}</div>
@@ -369,11 +369,25 @@ function renderRelatorio(rel) {
   if (state.mode === "mapa") renderMap(visibleItems());  // numera os escolhidos no mapa
 }
 
+// Imprime só depois que as fotos carregaram (até 8 s), com o relatório expandido
+async function imprimirRelatorio() {
+  const rel = $("#relatorio");
+  rel.classList.remove("recolhido");
+  const toggle = $("#rel-toggle");
+  if (toggle) toggle.textContent = "Recolher";
+  const pendentes = [...rel.querySelectorAll("img")].filter((img) => !img.complete);
+  await Promise.race([
+    Promise.all(pendentes.map((img) => new Promise((ok) => { img.onload = img.onerror = ok; }))),
+    new Promise((ok) => setTimeout(ok, 8000)),
+  ]);
+  window.print();
+}
+
 // Recolher/expandir, imprimir e "ver no mapa" (o relatório longo empurrava o mapa para baixo)
 $("#relatorio").addEventListener("click", (e) => {
   const b = e.target.closest("button");
   if (!b) return;
-  if (b.id === "rel-print") return window.print();
+  if (b.id === "rel-print") return imprimirRelatorio();
   if (b.id === "rel-toggle") {
     const recolhido = $("#relatorio").classList.toggle("recolhido");
     b.textContent = recolhido ? "Expandir" : "Recolher";
