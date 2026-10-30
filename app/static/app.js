@@ -291,7 +291,7 @@ function showResult(res) {
     const l = ia.leitura;
     iaChips.push(`<span class="source ia" title="${esc(`${l.novos} lidos agora, ${l.do_cache} do cache; ${l.sem_descricao} sem descrição; ${l.fora_do_limite} além do limite`)}">✨ IA leu ${l.anuncios_lidos} anúncios</span>`);
   } else if (ia && !ia.ativa) {
-    iaChips.push(`<span class="source off" title="Defina ANTHROPIC_API_KEY no servidor para ativar">IA desligada (sem chave da API)</span>`);
+    iaChips.push(`<span class="source off" title="Defina OPENAI_API_KEY ou ANTHROPIC_API_KEY no servidor para ativar">IA desligada (sem chave da API)</span>`);
   }
   for (const e of ia?.erros || []) iaChips.push(`<span class="source off">IA: ${esc(e)}</span>`);
   $("#res-sources").innerHTML = res.fontes
@@ -604,7 +604,7 @@ $("#diag-btn").addEventListener("click", async () => {
     $("#diag").innerHTML = d.fontes
       .map((f) => `<span class="source ${f.ok ? "" : "off"}">${esc(fonteNome(f.fonte))}: ${f.ok ? "ok" : esc(f.status ? `bloqueado (HTTP ${f.status})` : f.erro)} · ${f.segundos}s</span>`)
       .concat([`<span class="source">${d.bairros_na_tabela} bairros na tabela</span>`,
-        `<span class="source ${d.ia_ativa ? "ia" : "off"}">IA ${d.ia_ativa ? "ligada" : "desligada"}</span>`])
+        `<span class="source ${d.ia_ativa ? "ia" : "off"}">IA ${d.ia_ativa ? `ligada (${esc(d.ia_provedor)} · ${esc(d.ia_modelo)})` : "desligada"}</span>`])
       .join("");
   } catch (err) {
     $("#diag").innerHTML = `<span class="source off">${esc(err.message)}</span>`;

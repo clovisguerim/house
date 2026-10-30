@@ -1,7 +1,8 @@
-"""Uso do Claude na busca: interpretar o texto do usuário e ler a descrição dos anúncios.
+"""Uso de IA na busca: interpretar o texto do usuário e ler a descrição dos anúncios.
 
-Tudo aqui é opcional. Sem credencial (ou com HOUSE_LLM=off) a busca usa só as regras de
-`parser.py` e a inferência por regex dos provedores. Qualquer erro da IA cai nesse mesmo caminho.
+Funciona com Claude (Anthropic) ou OpenAI, conforme a chave configurada. Tudo aqui é opcional:
+sem credencial (ou com HOUSE_LLM=off) a busca usa só as regras de `parser.py` e a inferência por
+regex dos provedores. Qualquer erro da IA cai nesse mesmo caminho.
 """
 import asyncio
 import hashlib
@@ -10,36 +11,54 @@ import os
 import time
 
 import anthropic
+import openai
 
 from .config import (LLM_CACHE_TTL_SECONDS, LLM_CONCORRENCIA, LLM_EFFORT, LLM_LOTE, LLM_MAX_ANUNCIOS,
-                     LLM_MODELO_EXTRAIR, LLM_MODELO_INTERPRETAR, LLM_MODO)
+                     LLM_MODELO_EXTRAIR, LLM_MODELO_INTERPRETAR, LLM_MODELOS_PADRAO, LLM_MODO, LLM_PROVEDOR)
 from .db import SessionLocal
 from .models import HttpCache
 from .schemas import Filtros, Imovel
 
-# Modelos que aceitam o fallback do servidor quando o classificador de segurança recusa
+# Modelos Claude que aceitam o fallback do servidor quando o classificador de segurança recusa
 _COM_FALLBACK = {"claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-sonnet-5-5"}
 TIPOS = ["apartamento", "casa", "cobertura", "area-privativa", "kitnet"]
 GARANTIAS = ["seguro_fianca", "fiador", "caucao", "titulo_capitalizacao"]
 
-_client: anthropic.AsyncAnthropic | None = None
+_clientes: dict[str, object] = {}
 
 
 class ErroIA(Exception):
     pass
 
 
-def ativa() -> bool:
+def provedor() -> str | None:
+    """'anthropic', 'openai' ou None (IA desligada)."""
     if LLM_MODO == "off":
-        return False
-    return LLM_MODO == "on" or bool(os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN"))
+        return None
+    tem = {"anthropic": bool(os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN")),
+           "openai": bool(os.getenv("OPENAI_API_KEY"))}
+    if LLM_PROVEDOR in tem:
+        return LLM_PROVEDOR if tem[LLM_PROVEDOR] or LLM_MODO == "on" else None
+    return next((p for p in ("anthropic", "openai") if tem[p]), None)
 
 
-def _cliente() -> anthropic.AsyncAnthropic:
-    global _client
-    if _client is None:
-        _client = anthropic.AsyncAnthropic(timeout=180.0, max_retries=2)
-    return _client
+def ativa() -> bool:
+    return provedor() is not None
+
+
+def modelo_interpretar() -> str:
+    return LLM_MODELO_INTERPRETAR or LLM_MODELOS_PADRAO[provedor() or "anthropic"]
+
+
+def modelo_extrair() -> str:
+    return LLM_MODELO_EXTRAIR or LLM_MODELOS_PADRAO[provedor() or "anthropic"]
+
+
+def _cliente(nome: str):
+    if nome not in _clientes:
+        _clientes[nome] = (anthropic.AsyncAnthropic(timeout=180.0, max_retries=2) if nome == "anthropic"
+                           else openai.AsyncOpenAI(timeout=180.0, max_retries=2))
+    return _clientes[nome]
 
 
 # --- cache em SQLite (mesma tabela do cache HTTP, com chave própria) -----------------------
@@ -64,11 +83,48 @@ def _cache_set(chave: str, valor: dict) -> None:
 
 async def _json(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int) -> dict:
     """Uma chamada com saída estruturada; devolve o JSON já validado pelo schema."""
+    if provedor() == "openai":
+        return await _json_openai(modelo, system, conteudo, schema, max_tokens)
+    return await _json_anthropic(modelo, system, conteudo, schema, max_tokens)
+
+
+async def _json_openai(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int) -> dict:
+    extra = {}
+    if modelo.startswith(("gpt-5", "o")):  # modelos com raciocínio aceitam o nível de esforço
+        extra["reasoning_effort"] = LLM_EFFORT
+    try:
+        resp = await _cliente("openai").chat.completions.create(
+            model=modelo,
+            max_completion_tokens=max_tokens,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": conteudo}],
+            response_format={"type": "json_schema",
+                             "json_schema": {"name": "resposta", "strict": True, "schema": schema}},
+            **extra,
+        )
+    except openai.AuthenticationError as e:
+        raise ErroIA("chave da OpenAI inválida") from e
+    except openai.RateLimitError as e:
+        raise ErroIA("limite de uso ou crédito da OpenAI esgotado") from e
+    except openai.APIStatusError as e:
+        raise ErroIA(f"API da OpenAI respondeu {e.status_code}: {e.message}") from e
+    except openai.APIConnectionError as e:
+        raise ErroIA("sem conexão com a API da OpenAI") from e
+    escolha = resp.choices[0]
+    if getattr(escolha.message, "refusal", None):
+        raise ErroIA("o modelo recusou a solicitação")
+    if escolha.finish_reason == "length":
+        raise ErroIA("resposta do modelo cortada (limite de tokens)")
+    if not escolha.message.content:
+        raise ErroIA("resposta do modelo sem conteúdo")
+    return json.loads(escolha.message.content)
+
+
+async def _json_anthropic(modelo: str, system: str, conteudo: str, schema: dict, max_tokens: int) -> dict:
     extra = {}
     if modelo in _COM_FALLBACK:
         extra = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
     try:
-        resp = await _cliente().beta.messages.create(
+        resp = await _cliente("anthropic").beta.messages.create(
             model=modelo,
             max_tokens=max_tokens,
             system=system,
@@ -145,14 +201,14 @@ titulo_capitalizacao).
 
 
 async def interpretar(texto: str) -> Filtros:
-    chave = _chave("interpretar", LLM_MODELO_INTERPRETAR, texto.strip().lower())
+    chave = _chave("interpretar", modelo_interpretar(), texto.strip().lower())
     dados = _cache_get(chave)
     if dados is None:
-        dados = await _json(LLM_MODELO_INTERPRETAR, _SYSTEM_INTERPRETAR, texto, _SCHEMA_FILTROS, 4000)
+        dados = await _json(modelo_interpretar(), _SYSTEM_INTERPRETAR, texto, _SCHEMA_FILTROS, 4000)
         _cache_set(chave, dados)
     if not dados.get("tipos"):
         dados["tipos"] = ["apartamento", "casa"]
-    return Filtros(**dados, interpretado_por=LLM_MODELO_INTERPRETAR)
+    return Filtros(**dados, interpretado_por=modelo_interpretar())
 
 
 # --- 2. Ler a descrição dos anúncios ------------------------------------------------------------
@@ -193,7 +249,7 @@ andar" não é o andar da unidade.
 
 
 def _chave_anuncio(im: Imovel, desejos: list[str]) -> str:
-    return _chave("extrair", LLM_MODELO_EXTRAIR, im.fonte, im.id, im.descricao or "", "|".join(sorted(desejos)))
+    return _chave("extrair", modelo_extrair(), im.fonte, im.id, im.descricao or "", "|".join(sorted(desejos)))
 
 
 def _texto_anuncio(im: Imovel) -> dict:
@@ -242,7 +298,7 @@ async def enriquecer(imoveis: list[Imovel], filtros: Filtros) -> dict:
                               ensure_ascii=False)
         async with sem:
             try:
-                resp = await _json(LLM_MODELO_EXTRAIR, _SYSTEM_EXTRAIR, conteudo, _SCHEMA_ANUNCIOS, 16000)
+                resp = await _json(modelo_extrair(), _SYSTEM_EXTRAIR, conteudo, _SCHEMA_ANUNCIOS, 16000)
             except (ErroIA, json.JSONDecodeError) as e:
                 erros.append(str(e))
                 return
@@ -255,7 +311,7 @@ async def enriquecer(imoveis: list[Imovel], filtros: Filtros) -> dict:
 
     await asyncio.gather(*(lote(pendentes[i:i + LLM_LOTE]) for i in range(0, len(pendentes), LLM_LOTE)))
     return {
-        "modelo": LLM_MODELO_EXTRAIR,
+        "modelo": modelo_extrair(),
         "anuncios_lidos": do_cache + lidos_agora,
         "do_cache": do_cache,
         "novos": lidos_agora,

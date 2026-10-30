@@ -42,10 +42,13 @@ CADASTRO = os.getenv("HOUSE_CADASTRO", "aprovacao")
 # Buscas por hora para usuários comuns (cada busca abre centenas de páginas e pode usar a IA)
 BUSCAS_POR_HORA = int(os.getenv("HOUSE_BUSCAS_POR_HORA", "20"))
 
-# IA (Claude). Liga sozinha quando há ANTHROPIC_API_KEY/ANTHROPIC_AUTH_TOKEN; HOUSE_LLM=off desliga.
+# IA. Liga sozinha quando há ANTHROPIC_API_KEY (Claude) ou OPENAI_API_KEY (OpenAI); HOUSE_LLM=off desliga.
+# Com as duas chaves, HOUSE_LLM_PROVEDOR escolhe ("anthropic" ou "openai"); em "auto" vale a Anthropic.
 LLM_MODO = os.getenv("HOUSE_LLM", "auto")
-LLM_MODELO_INTERPRETAR = os.getenv("HOUSE_LLM_MODELO_INTERPRETAR", "claude-opus-5-5")
-LLM_MODELO_EXTRAIR = os.getenv("HOUSE_LLM_MODELO_EXTRAIR", "claude-opus-5-5")
+LLM_PROVEDOR = os.getenv("HOUSE_LLM_PROVEDOR", "auto")
+LLM_MODELOS_PADRAO = {"anthropic": "claude-opus-5-5", "openai": "gpt-5.4-mini"}
+LLM_MODELO_INTERPRETAR = os.getenv("HOUSE_LLM_MODELO_INTERPRETAR")  # vazio = padrão do provedor
+LLM_MODELO_EXTRAIR = os.getenv("HOUSE_LLM_MODELO_EXTRAIR")
 LLM_EFFORT = os.getenv("HOUSE_LLM_EFFORT", "low")  # extração/classificação: low costuma bastar
 LLM_LOTE = int(os.getenv("HOUSE_LLM_LOTE", "12"))  # anúncios por chamada
 LLM_CONCORRENCIA = int(os.getenv("HOUSE_LLM_CONCORRENCIA", "4"))

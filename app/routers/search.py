@@ -213,7 +213,8 @@ async def diagnostico(admin: User = Depends(require_admin)):
         fontes = await asyncio.gather(*(testar(n, u) for n, u in _PAGINAS_TESTE.items()))
     finally:
         await fetcher.aclose()
-    return {"fontes": fontes, "bairros_na_tabela": len(_BAIRROS), "ia_ativa": llm.ativa()}
+    return {"fontes": fontes, "bairros_na_tabela": len(_BAIRROS), "ia_ativa": llm.ativa(),
+            "ia_provedor": llm.provedor(), "ia_modelo": llm.modelo_interpretar() if llm.ativa() else None}
 
 
 @router.get("/fontes")

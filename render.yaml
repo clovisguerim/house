@@ -19,5 +19,7 @@ services:
         value: aprovacao
       - key: HOUSE_BUSCAS_POR_HORA
         value: "20"
+      - key: OPENAI_API_KEY
+        sync: false            # opcional: liga a IA com OpenAI (gpt-5.4-mini)
       - key: ANTHROPIC_API_KEY
-        sync: false            # opcional: liga a IA
+        sync: false            # opcional: liga a IA com Claude (tem prioridade se as duas existirem)

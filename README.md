@@ -91,9 +91,12 @@ O PC precisa estar ligado e conectado. `.\publicar-tailscale.ps1 -Parar` remove 
 garantia só são removidos anúncios que dizem explicitamente que **não** aceitam; os que confirmam
 aparecem primeiro.
 
-## IA (Claude)
+## IA (Claude ou OpenAI)
 
-Com `ANTHROPIC_API_KEY` definida no ambiente do servidor, a busca usa o Claude em duas etapas:
+Com `ANTHROPIC_API_KEY` (Claude) ou `OPENAI_API_KEY` (OpenAI, padrão `gpt-5.4-mini`) definida no
+ambiente do servidor, a busca usa IA em duas etapas. Com as duas chaves vale a Anthropic, ou o que
+estiver em `HOUSE_LLM_PROVEDOR` (`anthropic`/`openai`). `HOUSE_LLM_MODELO_INTERPRETAR` e
+`HOUSE_LLM_MODELO_EXTRAIR` trocam o modelo de cada etapa.
 
 1. **Interpretar o texto** – vira os mesmos filtros (tipo, quartos, bairro, raio, preço/total, vaga,
    pet, garantias, andar), entendendo sinônimos e negações ("sem térreo"), mais uma lista de
@@ -108,10 +111,11 @@ ou com qualquer erro da IA, a busca segue com as regras (`parser.py`) e a respos
 
 | Variável | Padrão | Para quê |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | – | liga a IA |
+| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | – | liga a IA (Claude / OpenAI) |
+| `HOUSE_LLM_PROVEDOR` | `auto` | `anthropic` ou `openai` quando as duas chaves existem |
 | `HOUSE_LLM` | `auto` | `off` desliga mesmo com chave |
-| `HOUSE_LLM_MODELO_INTERPRETAR` | `claude-opus-5-5` | modelo da interpretação |
-| `HOUSE_LLM_MODELO_EXTRAIR` | `claude-opus-5-5` | modelo da leitura dos anúncios (`claude-haiku-5-5` é ~40× mais barato) |
+| `HOUSE_LLM_MODELO_INTERPRETAR` | `claude-opus-5-5` / `gpt-5.4-mini` | modelo da interpretação |
+| `HOUSE_LLM_MODELO_EXTRAIR` | `claude-opus-5-5` / `gpt-5.4-mini` | modelo da leitura dos anúncios (`claude-haiku-5-5` é ~40× mais barato) |
 | `HOUSE_LLM_EFFORT` | `low` | esforço de raciocínio |
 | `HOUSE_LLM_MAX_ANUNCIOS` | `300` | anúncios lidos por busca |
 
