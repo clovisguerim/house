@@ -161,12 +161,15 @@ def html_busca(resp: SearchResponse, relatorio: dict | None = None, top: int = 3
 </body></html>"""
 
 
-async def html_busca_com_fotos(resp: SearchResponse, relatorio: dict | None = None, top: int = 30) -> str:
-    """Como html_busca, com as fotos reduzidas e embutidas (para PDF leve e offline)."""
+async def html_busca_com_fotos(resp: SearchResponse, relatorio: dict | None = None,
+                               top: int = 30) -> tuple[str, int, int]:
+    """Como html_busca, com as fotos reduzidas e embutidas (para PDF leve e offline).
+    Devolve também quantas fotos foram embutidas e quantas foram tentadas."""
     ids = {r["id"] for r in (relatorio or {}).get("ranking", [])}
     listados = resp.imoveis[:top] + [im for im in resp.imoveis if f"{im.fonte}:{im.id}" in ids]
-    urls = [u for im in listados for u in im.fotos[:1] if u.startswith("https://")]
-    return html_busca(resp, relatorio, top, await miniaturas(urls))
+    urls = list(dict.fromkeys(u for im in listados for u in im.fotos[:1] if u.startswith("https://")))
+    thumbs = await miniaturas(urls)
+    return html_busca(resp, relatorio, top, thumbs), len(thumbs), len(urls)
 
 
 def _navegador() -> str | None:

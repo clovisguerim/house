@@ -85,8 +85,11 @@ async def main():
 
     if args.pdf:
         from app.exportar import html_busca_com_fotos, salvar_pdf
-        pdf = salvar_pdf(await html_busca_com_fotos(resposta, relatorio, args.pdf_top), Path(args.pdf))
-        print(f"PDF salvo em: {pdf}")
+        html, com_foto, tentadas = await html_busca_com_fotos(resposta, relatorio, args.pdf_top)
+        pdf = salvar_pdf(html, Path(args.pdf))
+        print(f"PDF salvo em: {pdf}  (fotos: {com_foto} de {tentadas})")
+        if com_foto < tentadas:
+            print("  Algumas fotos não baixaram (rede/portal); rode de novo para tentar outra vez.")
 
     if destino is not None:
         with Session(destino) as db:
